@@ -1,0 +1,11 @@
+{% autoescape off %}Olá, {{ user.nome }}.
+
+Recebemos um pedido para criar uma senha nova para o seu acesso à EntreLaço.
+
+Para criar a senha, abra este link (vale por 24 horas):
+{{ protocol }}://{{ domain }}{% url 'senha_definir' uidb64=uid token=token %}
+
+Se não foi você quem pediu, ignore este e-mail: sua senha continua a mesma.
+
+EntreLaço
+{% endautoescape %}

@@ -1,0 +1,25 @@
+{% load static entrelaco %}<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <meta name="htmx-config" content='{"includeIndicatorStyles":false,"allowEval":false,"allowScriptTags":false,"historyCacheSize":0,"refreshOnHistoryMiss":true}'>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="color-scheme" content="light dark">
+  <title>{% block titulo %}EntreLaço{% endblock %} · EntreLaço</title>
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="{% static 'js/htmx.min.js' %}" defer></script>
+  <script src="{% static 'js/app.js' %}" defer></script>
+</head>
+<body>
+  <a class="el-skip" href="#conteudo">Pular para o conteúdo</a>
+  {% if AMBIENTE_DE_TESTE %}
+  <div class="el-test-banner" role="note">{% icone "alerta" %}<span>Ambiente de teste. Use só dados inventados: nada de nome, diagnóstico ou contato de criança real.</span></div>
+  {% endif %}
+  <main id="conteudo" tabindex="-1" class="{% block classe_main %}el-auth{% endblock %}">
+    {% block conteudo %}{% endblock %}
+  </main>
+</body>
+</html>

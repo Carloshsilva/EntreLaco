@@ -1,0 +1,28 @@
+{% load entrelaco %}{# Um campo de formulário: rótulo acima, dica e erro ligados por aria-describedby. Use: include "core/_campo.html" with campo=form.nome largo=True #}
+{% if campo.is_hidden %}{{ campo }}
+{% elif campo|e_caixa %}
+<div class="el-field{% if campo.errors %} el-field-error{% endif %}{% if largo %} el-field-full{% endif %}">
+  <div class="el-check-row">
+    {{ campo|com_aria }}
+    <label class="el-label" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+  </div>
+  {% if campo.help_text %}<p class="el-hint" id="{{ campo.auto_id }}_dica">{{ campo.help_text }}</p>{% endif %}
+  {% if campo.errors %}<p class="el-error" id="{{ campo.auto_id }}_erro">{% icone "erro" %}<span>{{ campo.errors|join:" " }}</span></p>{% endif %}
+</div>
+{% elif campo|e_lista_de_opcoes %}
+<fieldset class="el-field el-fieldset-plain{% if campo.errors %} el-field-error{% endif %}{% if largo %} el-field-full{% endif %}"{% if campo.help_text or campo.errors %} aria-describedby="{% if campo.help_text %}{{ campo.auto_id }}_dica{% endif %}{% if campo.errors %} {{ campo.auto_id }}_erro{% endif %}"{% endif %}>
+  <legend class="el-label">{{ campo.label }}{% if campo.field.required %} <span class="el-req">(obrigatório)</span>{% endif %}</legend>
+  {% if campo.help_text %}<p class="el-hint" id="{{ campo.auto_id }}_dica">{{ campo.help_text }}</p>{% endif %}
+  <ul class="el-choices">
+    {% for opcao in campo %}<li><label for="{{ opcao.id_for_label }}">{{ opcao.tag }}<span>{{ opcao.choice_label }}</span></label></li>{% endfor %}
+  </ul>
+  {% if campo.errors %}<p class="el-error" id="{{ campo.auto_id }}_erro">{% icone "erro" %}<span>{{ campo.errors|join:" " }}</span></p>{% endif %}
+</fieldset>
+{% else %}
+<div class="el-field{% if campo.errors %} el-field-error{% endif %}{% if largo %} el-field-full{% endif %}">
+  <label class="el-label" for="{{ campo.id_for_label }}">{{ campo.label }}{% if campo.field.required %} <span class="el-req">(obrigatório)</span>{% endif %}</label>
+  {% if campo.help_text %}<p class="el-hint" id="{{ campo.auto_id }}_dica">{{ campo.help_text }}</p>{% endif %}
+  {{ campo|com_aria }}
+  {% if campo.errors %}<p class="el-error" id="{{ campo.auto_id }}_erro">{% icone "erro" %}<span>{{ campo.errors|join:" " }}</span></p>{% endif %}
+</div>
+{% endif %}

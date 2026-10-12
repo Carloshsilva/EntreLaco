@@ -1,0 +1,40 @@
+{% load entrelaco %}{% comment %}
+Formulário completo no padrão da EntreLaço.
+Parâmetros: form; botao (texto do botão principal); cancelar (URL); acao (URL do POST, opcional);
+secoes (opcional): lista de {"titulo": ..., "campos": [nomes], "ajuda": ...}; colunas (True para duas colunas no tablet).
+Em edição, já inclui o motivo da alteração, o campo escondido estado_original e o quadro de conflito.
+{% endcomment %}
+<form class="el-form{% if colunas %} el-form-wide{% endif %}" method="post"{% if acao %} action="{{ acao }}"{% endif %}{% if form.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>
+  {% csrf_token %}
+  {% if estado_original %}<input type="hidden" name="estado_original" value="{{ estado_original }}">{% endif %}
+  {% if conflitos %}{% include "core/_conflito.html" %}{% endif %}
+  {% include "core/_erros_do_formulario.html" %}
+  {% if secoes %}
+    {% for secao in secoes %}
+    <fieldset class="el-fieldset">
+      <legend>{{ secao.titulo }}</legend>
+      {% if secao.ajuda %}<p class="el-hint el-fieldset-help">{{ secao.ajuda }}</p>{% endif %}
+      <div class="{% if colunas %}el-form-cols{% else %}el-grid{% endif %}">
+        {% for nome in secao.campos %}{% with c=form|campo:nome %}{% if c %}{% include "core/_campo.html" with campo=c largo=c|e_largo %}{% endif %}{% endwith %}{% endfor %}
+      </div>
+    </fieldset>
+    {% endfor %}
+    {% campos_restantes form secoes as restantes %}
+    {% if restantes %}
+    <div class="{% if colunas %}el-form-cols{% else %}el-grid{% endif %}">
+      {% for c in restantes %}{% include "core/_campo.html" with campo=c largo=c|e_largo %}{% endfor %}
+    </div>
+    {% endif %}
+  {% else %}
+    <div class="{% if colunas %}el-form-cols{% else %}el-grid{% endif %}">
+      {% for c in form %}{% if c.name != "motivo_alteracao" %}{% include "core/_campo.html" with campo=c largo=c|e_largo %}{% endif %}{% endfor %}
+    </div>
+  {% endif %}
+  {% with motivo=form|campo:"motivo_alteracao" %}{% if motivo %}
+  <div class="el-card">{% include "core/_campo.html" with campo=motivo %}</div>
+  {% endif %}{% endwith %}
+  <div class="el-actions el-actions-sticky">
+    <button type="submit" class="el-btn el-btn-primary">{{ botao|default:"Salvar" }}</button>
+    {% if cancelar %}<a class="el-btn el-btn-secondary" href="{{ cancelar }}">Cancelar</a>{% endif %}
+  </div>
+</form>

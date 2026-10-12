@@ -1,0 +1,61 @@
+{% load static entrelaco %}<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  {# historyCacheSize 0: o HTMX não guarda cópia das telas no aparelho (SEG-09). #}
+  <meta name="htmx-config" content='{"includeIndicatorStyles":false,"allowEval":false,"allowScriptTags":false,"historyCacheSize":0,"refreshOnHistoryMiss":true,"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"4..","swap":true},{"code":"5..","swap":false,"error":true}]}'>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="color-scheme" content="light dark">
+  <title>{% block titulo %}EntreLaço{% endblock %} · EntreLaço</title>
+  <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script src="{% static 'js/htmx.min.js' %}" defer></script>
+  <script src="{% static 'js/app.js' %}" defer></script>
+</head>
+<body hx-boost="true">
+  <a class="el-skip" href="#conteudo">Pular para o conteúdo</a>
+  {% if AMBIENTE_DE_TESTE %}
+  <div class="el-test-banner" role="note">{% icone "alerta" %}<span>Ambiente de teste. Use só dados inventados: nada de nome, diagnóstico ou contato de criança real.</span></div>
+  {% endif %}
+  <div class="el-app">
+    <header class="el-topbar">
+      <a class="el-brand" href="{% url 'inicio' %}">EntreLaço</a>
+      {% if servico_atual %}<span class="el-topbar-service">{{ servico_atual.nome }}</span>{% endif %}
+      <span class="el-topbar-spacer"></span>
+      {% if user.is_authenticated %}
+      <details class="el-menu el-topbar-menu">
+        <summary class="el-btn el-btn-quiet">{% icone "menu" %}Menu</summary>
+        <nav class="el-menu-panel" aria-label="Menu completo">{% include "core/_menu.html" %}</nav>
+      </details>
+      {% endif %}
+    </header>
+    <div class="el-shell">
+      {% if user.is_authenticated %}
+      <nav class="el-sidenav" aria-label="Menu principal">{% include "core/_menu.html" %}</nav>
+      {% endif %}
+      <main id="conteudo" class="el-main" tabindex="-1">
+        <div class="el-page {% block largura %}{% endblock %}">
+          {% include "core/_mensagens.html" %}
+          {% block conteudo %}{% endblock %}
+        </div>
+      </main>
+    </div>
+    {% if menu_principal %}
+    <nav class="el-bottomnav" aria-label="Atalhos">
+      {% for item in menu_principal %}
+      <a href="{{ item.url }}"{% if item.atual %} aria-current="page"{% endif %}>{% icone item.icone "el-icon-lg" %}{{ item.rotulo }}</a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+  </div>
+  <div role="status" aria-live="polite">
+    <div id="aviso-conexao" class="el-sync el-sync-offline" hidden>
+      <svg class="el-icon" aria-hidden="true" focusable="false"><use href="{% static 'img/icones.svg' %}#offline"></use></svg>
+      <span data-aviso-texto></span>
+      <button type="button" class="el-btn el-btn-secondary" data-aviso-tentar>Tentar agora</button>
+    </div>
+  </div>
+</body>
+</html>

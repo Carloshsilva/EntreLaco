@@ -1,0 +1,16 @@
+{% extends "base_simples.html" %}
+{% block titulo %}Esqueci a senha{% endblock %}
+{% block conteudo %}
+<p class="el-auth-brand">EntreLaço</p>
+<div class="el-card el-auth-card">
+  <h1 class="el-title">Esqueci a senha</h1>
+  <p>Digite o e-mail que você usa para entrar. Se ele estiver cadastrado, você recebe um link para criar uma senha nova.</p>
+  <form class="el-form" method="post" novalidate>
+    {% csrf_token %}
+    {% include "core/_erros_do_formulario.html" %}
+    {% include "core/_campo.html" with campo=form.email %}
+    <button type="submit" class="el-btn el-btn-primary el-btn-block">Enviar link</button>
+  </form>
+  <p><a href="{% url 'entrar' %}">Voltar para entrar</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Sem serviço{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead"><div class="el-pagehead-text"><h1 class="el-display">Você ainda não está em nenhum serviço</h1></div></header>
+<div class="el-card">
+  <p>Seu login funciona, mas nenhum serviço de educação hospitalar ligou você à equipe dele. Peça para quem cuida da equipe no seu serviço cadastrar você com um papel.</p>
+  {% if user.is_staff %}<p>Como administrador da plataforma, você pode cadastrar serviços e vínculos no <a href="{% url 'admin:index' %}" hx-boost="false">painel da plataforma</a>.</p>{% endif %}
+</div>
+{% endblock %}

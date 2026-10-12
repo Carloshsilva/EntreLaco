@@ -1,0 +1,17 @@
+{% load entrelaco %}{# Cartão de pendência (RF-43). Recebe `p` (core.registro.Pendencia). #}
+<article class="el-task{% if p.situacao_do_prazo == 'vencida' %} el-task-overdue{% elif p.situacao_do_prazo == 'hoje' %} el-task-today{% endif %}">
+  <div class="el-task-top">
+    <h3 class="el-task-title"><a href="{{ p.url }}">{{ p.titulo }}</a></h3>
+    {% if p.situacao_do_prazo == "vencida" %}<span class="el-badge el-badge-danger">Vencida</span>
+    {% elif p.situacao_do_prazo == "hoje" %}<span class="el-badge el-badge-fita">Vence hoje</span>
+    {% else %}<span class="el-badge">{{ p.tipo }}</span>{% endif %}
+  </div>
+  {% if p.aluno %}<p class="el-task-student">{% icone "aluno" %} {{ p.aluno }}</p>{% endif %}
+  {% if p.detalhe %}<p>{{ p.detalhe }}</p>{% endif %}
+  <p class="el-task-meta">
+    {% if p.prazo %}<span class="el-task-due">{% icone "relogio" %}Prazo {{ p.prazo|date:"d/m" }}</span>{% endif %}
+    {% if p.situacao_do_prazo == "vencida" or p.situacao_do_prazo == "hoje" %}<span>{{ p.tipo }}</span>{% endif %}
+    {% if p.responsavel %}<span>{% icone "aluno" %} Com {{ p.responsavel }}</span>{% endif %}
+  </p>
+  {% if p.origem %}<p class="el-task-origin">{{ p.origem }}</p>{% endif %}
+</article>

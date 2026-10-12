@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Não encontrado{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead"><div class="el-pagehead-text"><h1 class="el-display">Não encontramos esta página</h1></div></header>
+<div class="el-card">
+  <p>O endereço pode estar errado, ou o cadastro foi removido ou é de outro serviço.</p>
+  <p><a href="{% url 'inicio' %}">Voltar para o início</a></p>
+</div>
+{% endblock %}

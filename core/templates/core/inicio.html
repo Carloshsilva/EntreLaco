@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Início{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <h1 class="el-display">Olá, {{ user.get_short_name }}</h1>
+    <p class="el-muted">{{ hoje|date:"l, j \d\e F"|lower|capfirst }}</p>
+  </div>
+  <div class="el-pagehead-actions">
+    {% if acesso|pode_editar:"aulas" %}<a class="el-btn el-btn-primary" href="{% url 'aulas:registrar' %}">{% icone "aula" %}Registrar aula</a>{% endif %}
+    {% if acesso|pode_editar:"identificacao" %}<a class="el-btn el-btn-secondary" href="{% url 'alunos:novo' %}">{% icone "nova-pessoa" %}Cadastrar aluno</a>{% endif %}
+  </div>
+</header>
+
+<div class="el-grid el-grid-2">
+  <section class="el-section" aria-labelledby="titulo-pendencias">
+    <div class="el-card-head">
+      <h2 id="titulo-pendencias" class="el-heading">{% if todas %}Pendências de todos{% else %}Suas pendências{% endif %}</h2>
+      {% if pode_ver_todas %}
+      <nav class="el-cluster" aria-label="Filtro das pendências">
+        <a class="el-btn el-btn-quiet" href="{% url 'inicio' %}"{% if not todas %} aria-current="page"{% endif %}>Minhas</a>
+        <a class="el-btn el-btn-quiet" href="{% url 'inicio' %}?ver=todas"{% if todas %} aria-current="page"{% endif %}>De todos</a>
+      </nav>
+      {% endif %}
+    </div>
+    {% if pendencias %}
+    <p class="el-muted">{{ pendencias|length }} pendência{{ pendencias|length|pluralize:"s" }}{% if vencidas %}, {{ vencidas }} vencida{{ vencidas|pluralize:"s" }}{% endif %}{% if de_hoje %}, {{ de_hoje }} para hoje{% endif %}.</p>
+    <ul class="el-list">
+      {% for p in pendencias %}<li>{% include "core/_pendencia.html" %}</li>{% endfor %}
+    </ul>
+    {% else %}
+    <div class="el-empty">{% icone "ok" "el-icon-lg" %}<p>Nenhuma pendência agora.</p></div>
+    {% endif %}
+  </section>
+
+  <section class="el-section" aria-labelledby="titulo-agenda">
+    <div class="el-card-head">
+      <h2 id="titulo-agenda" class="el-heading">Sua agenda de hoje</h2>
+      <a class="el-btn el-btn-quiet" href="{% url 'agenda' %}">Ver a semana{% icone "avancar" %}</a>
+    </div>
+    {% if eventos_de_hoje %}
+    <ul class="el-list">{% for e in eventos_de_hoje %}<li>{% include "core/_evento.html" %}</li>{% endfor %}</ul>
+    {% else %}
+    <div class="el-empty"><p>Nada marcado para hoje.</p></div>
+    {% endif %}
+    {% if proximos_eventos %}
+    <h3 class="el-label-text">Próximos dias</h3>
+    <ul class="el-list">
+      {% for e in proximos_eventos|slice:":6" %}<li><p class="el-caption">{{ e.data|date:"l, d/m" }}</p>{% include "core/_evento.html" %}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base_simples.html" %}
+{% block titulo %}Senha criada{% endblock %}
+{% block conteudo %}
+<p class="el-auth-brand">EntreLaço</p>
+<div class="el-card el-auth-card">
+  <h1 class="el-title">Senha criada</h1>
+  <p>Pronto. Agora é só entrar com seu e-mail e a senha nova.</p>
+  <a class="el-btn el-btn-primary el-btn-block" href="{% url 'entrar' %}">Entrar</a>
+</div>
+{% endblock %}

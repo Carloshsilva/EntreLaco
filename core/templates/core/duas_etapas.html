@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Verificação em duas etapas{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead"><div class="el-pagehead-text"><h1 class="el-display">Verificação em duas etapas</h1></div></header>
+{% if ativa %}
+<div class="el-card"><p>{% icone "ok" %} A verificação em duas etapas está ativa na sua conta. Para trocar de celular, peça ao administrador da plataforma para desativar e ative de novo.</p></div>
+{% else %}
+{% if obrigatoria %}
+<div class="el-alert el-alert-warning">{% icone "alerta" %}<div><p>Seu papel configura o serviço ou administra a plataforma. Para continuar, ative a verificação em duas etapas.</p></div></div>
+{% endif %}
+<section class="el-card" aria-labelledby="passo1">
+  <h2 id="passo1" class="el-heading">1. Instale um aplicativo autenticador</h2>
+  <p>Use um aplicativo gratuito como Google Authenticator, Microsoft Authenticator ou Authy no seu celular.</p>
+</section>
+<section class="el-card" aria-labelledby="passo2">
+  <h2 id="passo2" class="el-heading">2. Leia o código com o aplicativo</h2>
+  <div class="el-qr"><img src="{{ qr }}" alt="Código QR para cadastrar a EntreLaço no aplicativo autenticador" width="200" height="200"></div>
+  <p>Se não conseguir ler, digite esta chave no aplicativo:</p>
+  <p class="el-data">{{ segredo }}</p>
+</section>
+<section class="el-card" aria-labelledby="passo3">
+  <h2 id="passo3" class="el-heading">3. Digite o código que aparece no aplicativo</h2>
+  <form class="el-form" method="post" novalidate>
+    {% csrf_token %}
+    {% include "core/_erros_do_formulario.html" %}
+    {% include "core/_campo.html" with campo=form.codigo %}
+    <div class="el-actions"><button type="submit" class="el-btn el-btn-primary">Ativar</button></div>
+  </form>
+</section>
+<form method="post" action="{% url 'sair' %}" hx-boost="false">{% csrf_token %}<button class="el-btn el-btn-quiet" type="submit">Sair e fazer depois</button></form>
+{% endif %}
+{% endblock %}

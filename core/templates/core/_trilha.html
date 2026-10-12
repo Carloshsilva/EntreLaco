@@ -1,0 +1,21 @@
+{% load entrelaco %}{# Histórico de alterações. Recebe `eventos` (com mudancas_permitidas). #}
+{% if eventos %}
+<ol class="el-trail">
+  {% for evento in eventos %}
+  <li class="el-trail-item">
+    <p><strong>{{ evento.usuario_nome|default:"Sistema" }}</strong> {{ evento.get_acao_display|lower }}{% if mostrar_objeto %} {{ evento.objeto_repr }}{% endif %}</p>
+    <p class="el-caption"><time datetime="{{ evento.criado_em|date:'c' }}">{{ evento.criado_em|date:"d/m/Y \à\s H:i" }}</time>{% if evento.descricao %} · {{ evento.descricao }}{% endif %}</p>
+    {% if evento.motivo %}<p>Motivo: {{ evento.motivo }}</p>{% endif %}
+    {% if evento.mudancas_permitidas and evento.acao != "criou" %}
+    <ul class="el-trail-changes">
+      {% for nome, m in evento.mudancas_permitidas.items %}
+      <li>{{ m.rotulo|capfirst }}: <del><span class="el-sr-only">antes </span>{{ m.de|default:"(vazio)" }}</del> → <ins><span class="el-sr-only">depois </span>{{ m.para|default:"(vazio)" }}</ins></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<p class="el-muted">Nada registrado ainda.</p>
+{% endif %}
