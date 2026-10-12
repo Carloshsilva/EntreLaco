@@ -239,7 +239,21 @@ class MudancaDeSituacao(ModeloDoServico):
         verbose_name="responsável pela saída",
     )
 
-    GRUPOS_DE_CAMPOS = {"identificacao": ["de", "para", "data", "motivo", "motivo_saida", "responsavel"]}
+    # Saída por alta de aluno do TMO: alguém confere se precisa de professor domiciliar (RF-24).
+    domiciliar_verificado_em = models.DateField(
+        "professor domiciliar verificado em", null=True, blank=True, editable=False
+    )
+    domiciliar_verificado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="+", editable=False
+    )
+    domiciliar_observacao = models.TextField("o que foi decidido sobre o professor domiciliar", blank=True)
+
+    GRUPOS_DE_CAMPOS = {
+        "identificacao": [
+            "de", "para", "data", "motivo", "motivo_saida", "responsavel", "domiciliar_verificado_em",
+            "domiciliar_verificado_por", "domiciliar_observacao",
+        ],
+    }
 
     class Meta:
         verbose_name = "mudança de situação"

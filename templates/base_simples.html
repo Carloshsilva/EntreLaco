@@ -10,8 +10,11 @@
   <title>{% block titulo %}EntreLaço{% endblock %} · EntreLaço</title>
   <link rel="stylesheet" href="{% static 'css/tokens.css' %}">
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
-  <script src="{% static 'js/htmx.min.js' %}" defer></script>
+  {% for modulo in MODULOS %}<link rel="stylesheet" href="{% static 'css/modulos/'|add:modulo|add:'.css' %}">
+  {% endfor %}<script src="{% static 'js/htmx.min.js' %}" defer></script>
   <script src="{% static 'js/app.js' %}" defer></script>
+  {% for modulo in MODULOS %}<script src="{% static 'js/modulos/'|add:modulo|add:'.js' %}" defer></script>
+  {% endfor %}
 </head>
 <body>
   <a class="el-skip" href="#conteudo">Pular para o conteúdo</a>

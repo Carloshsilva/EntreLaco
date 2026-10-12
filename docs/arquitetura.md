@@ -76,8 +76,10 @@ Cada app registra no seu `encaixes.py` (importado pelo `ready()` do AppConfig):
 
 - `registrar_menu(ItemDeMenu(...))`: item do menu lateral e da barra de baixo (já feito para todas as apps).
 - `registrar_secao_do_aluno(SecaoDoAluno(chave, titulo, template, contexto, grupo, ordem))`: uma seção do
-  perfil do aluno. `contexto(request, aluno)` devolve um dicionário (ou `None` para esconder). O template
-  da seção recebe esse dicionário em `secao.contexto`, mais `aluno`, `acesso` e `request`.
+  perfil do aluno. `contexto(request, aluno)` devolve um dicionário (ou `None` para esconder). O perfil
+  desenha cada seção como `<section id="secao-{chave}" class="el-card">` com o título num `h2`, e inclui o
+  template da seção com `dados` (o dicionário), `aluno`, `acesso` e `request`. O template da seção não
+  repete o título; dentro dele, use `h3`.
   Ordem combinada: ficha 10, responsáveis 20, autorizações 30, aulas 40, citações em reunião 50,
   documentos 60, situação 70, histórico de alterações 90.
 - `registrar_fonte_de_pendencias(funcao)`: `funcao(request, usuario, todas)` devolve uma lista de
@@ -130,6 +132,8 @@ Cada app registra no seu `encaixes.py` (importado pelo `ready()` do AppConfig):
   hx-target="#resultados" hx-push-url="true">`; a mesma view devolve só o trecho `#resultados` quando
   `request.htmx` é verdadeiro (use `django_htmx`), e a página inteira quando não é. Os resultados ficam
   num `<div id="resultados" aria-live="polite">`.
+- CSS e JavaScript próprios de uma app vão em `static/css/modulos/<app>.css` e `static/js/modulos/<app>.js`
+  (já carregados em todas as telas). `static/css/app.css` e `static/js/app.js` são do núcleo.
 - Proibido pela política de conteúdo: estilo inline (`style=`), `<script>` inline, `hx-on`, `onclick` e
   recursos de outros domínios. Comportamento novo vai em `static/js/app.js`, iniciado por `htmx.onLoad`.
 - Áreas de toque de pelo menos 48px (as classes já garantem). Nada rola de lado na página inteira.
