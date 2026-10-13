@@ -14,7 +14,7 @@
 {% if atual %}
 <div class="el-autorizacoes-atual">
   <p>Situação atual: {% include "autorizacoes/_selo.html" with autorizacao=atual %}</p>
-  <p class="el-caption">{% if atual.colhida_em %}Colhida em {{ atual.colhida_em|date:"d/m/Y \à\s H:i" }}{% else %}Registrada em {{ atual.criado_em|date:"d/m/Y" }}{% endif %}{% if atual.colhida_por %} por {{ atual.colhida_por.nome_curto }}{% endif %}. <a href="{% url 'autorizacoes:detalhe' atual.pk %}">Ver comprovante</a></p>
+  <p class="el-caption">{% if atual.colhida_em %}Colhida em {{ atual.colhida_em|date:"d/m/Y \à\s H:i" }}{% else %}Registrada em {{ atual.criado_em|date:"d/m/Y" }}{% endif %}{% if atual.colhida_por %} por {{ atual.colhida_por.nome }}{% endif %}. <a href="{% url 'autorizacoes:detalhe' atual.pk %}">Ver comprovante</a></p>
 </div>
 {% endif %}
 
@@ -41,7 +41,7 @@
 {% if definitivo %}
 <div class="el-alert el-alert-info">
   {% icone "info" %}
-  <div><p>A família deu o sim provisório por WhatsApp{% if atual.colhida_em %} em {{ atual.colhida_em|date:"d/m/Y" }}{% endif %}. Ele já libera o contato com a escola; agora colha o sim definitivo no tablet ou no papel.</p></div>
+  <div><p>A família deu o sim provisório por WhatsApp{% if atual.colhida_em %} em {{ atual.colhida_em|date:"d/m/Y" }}{% endif %}. {% if tipo == 'contato_escola' %}Ele já libera o contato com a escola; agora colha{% else %}Ele vale só até o sim definitivo: colha{% endif %} o sim definitivo no tablet ou no papel.</p></div>
 </div>
 {% elif atual.situacao == "pendente" and atual.forma == "tablet" %}
 <div class="el-alert el-alert-info">
@@ -74,7 +74,7 @@
     {% if "whatsapp" in permitidas %}
     <li class="el-card el-autorizacoes-forma">
       <h3 class="el-label-text">{% icone "telefone" %}Sim por WhatsApp</h3>
-      <p>O responsável diz sim pelo WhatsApp de trabalho, e você anexa a conversa exportada. É provisório: já libera o contato com a escola e fica nas suas pendências até o sim definitivo.</p>
+      <p>O responsável diz sim pelo WhatsApp de trabalho, e você anexa a conversa exportada. É provisório: {% if tipo == 'contato_escola' %}já libera o contato com a escola e {% endif %}fica nas suas pendências até o sim definitivo.</p>
       <p><a class="el-btn el-btn-secondary" href="{{ url_colher }}?forma=whatsapp">Usar sim por WhatsApp</a></p>
     </li>
     {% endif %}
@@ -110,7 +110,7 @@
   <p class="el-muted">Registre quem disse sim e anexe a conversa exportada do WhatsApp de trabalho.</p>
   <div class="el-alert el-alert-info">
     {% icone "info" %}
-    <div><p>O sim por WhatsApp é provisório: já libera o contato com a escola e fica nas suas pendências até o sim definitivo, no tablet ou no papel. Se ele basta para o contato com a escola, o advogado ainda vai responder (LGPD-05).</p></div>
+    <div><p>O sim por WhatsApp é provisório: {% if tipo == 'contato_escola' %}já libera o contato com a escola e {% endif %}fica nas suas pendências até o sim definitivo, no tablet ou no papel. Se ele basta {% if tipo == 'contato_escola' %}para o contato com a escola{% else %}como autorização{% endif %}, o advogado ainda vai responder (LGPD-05).</p></div>
   </div>
   {% else %}
   <h2 id="titulo-forma" class="el-heading">{% icone "relogio" %}Registrar como pendente</h2>

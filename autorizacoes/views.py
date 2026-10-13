@@ -50,13 +50,13 @@ Situacao = Autorizacao.Situacao
 Forma = Autorizacao.Forma
 Acao = auditoria.Acao
 
-# Campos que vão para a trilha quando uma coleta é registrada.
+# Campos que vão para a trilha quando uma coleta é registrada. A data e a hora da coleta e da
+# revogação são as do próprio evento da trilha, por isso não se repetem nas mudanças.
 CAMPOS_DA_TRILHA = [
-    "tipo", "situacao", "forma", "termo", "responsavel_nome", "responsavel_documento", "colhida_por", "colhida_em",
-    "observacoes",
+    "tipo", "situacao", "forma", "termo", "responsavel_nome", "responsavel_documento", "colhida_por", "observacoes",
 ]
 CAMPOS_DA_ASSINATURA = CAMPOS_DA_TRILHA + ["aparelho", "assinatura", "impressao_digital"]
-CAMPOS_DA_REVOGACAO = ["situacao", "revogada_em", "revogacao_motivo"]
+CAMPOS_DA_REVOGACAO = ["situacao", "revogacao_motivo"]
 
 
 # ---------------------------------------------------------------- permissões

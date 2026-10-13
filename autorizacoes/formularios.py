@@ -251,5 +251,7 @@ class FormularioTermo(ModeloFormularioBase):
 class FormularioTermoEdicao(FormularioTermo, MotivoDaAlteracaoMixin):
     """Corrigir um termo que ainda não foi usado em nenhuma autorização."""
 
+    exemplo_do_motivo = "corrigi um erro de digitação"
+
     class Meta(FormularioTermo.Meta):
         fields = ["titulo", "texto"]

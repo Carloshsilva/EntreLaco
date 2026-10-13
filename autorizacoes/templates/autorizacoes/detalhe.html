@@ -41,7 +41,7 @@
     <div><dt>Como a família pediu a revogação</dt><dd>{{ autorizacao.revogacao_motivo }}</dd></div>
     {% endif %}
   </dl>
-  {% if autorizacao.situacao == "provisoria" %}<p class="el-muted">O sim por WhatsApp é provisório: libera o contato com a escola até o sim definitivo.</p>{% endif %}
+  {% if autorizacao.situacao == "provisoria" %}<p class="el-muted">O sim por WhatsApp é provisório: {% if autorizacao.tipo == 'contato_escola' %}libera o contato com a escola até o sim definitivo{% else %}vale até o sim definitivo, no tablet ou no papel{% endif %}.</p>{% endif %}
 </section>
 
 <section class="el-card" aria-labelledby="titulo-quem">
@@ -65,7 +65,7 @@
       <dd>
         {% if autorizacao.impressao_digital %}
         <span class="el-data el-autorizacoes-impressao">{{ autorizacao.impressao_digital }}</span>
-        {% if confere is True %}<p class="el-autorizacoes-confere">{% icone "ok" %}<span>Confere: {% if autorizacao.forma == "tablet" %}o termo, quem assinou, a resposta, a data e a assinatura{% else %}o arquivo{% endif %} não mudaram desde a coleta.</span></p>
+        {% if confere is True %}<p class="el-autorizacoes-confere">{% icone "ok" %}<span>{% if autorizacao.forma == "tablet" %}Confere: o termo, quem assinou, a resposta, a data e a assinatura não mudaram desde a coleta.{% else %}Confere: o arquivo não mudou desde a coleta.{% endif %}</span></p>
         {% elif confere is False %}<p class="el-error">{% icone "erro" %}<span>Não confere: algo mudou depois da coleta ou o arquivo não foi encontrado. Avise quem administra a plataforma.</span></p>{% endif %}
         {% else %}Ainda não há: a impressão digital é gerada quando a família responde.{% endif %}
       </dd>

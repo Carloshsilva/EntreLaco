@@ -6,7 +6,7 @@
   <h1 class="el-title">Entrar</h1>
   {% include "core/_mensagens.html" %}
   {% if assinatura_ok %}
-  <div class="el-alert el-alert-success" role="status"><div><p>Assinatura registrada. Obrigado. Professor(a), entre de novo para continuar.</p></div></div>
+  <div class="el-alert el-alert-success" role="status"><div><p>Resposta registrada, agradecemos. Para continuar, a pessoa da equipe entra de novo com o próprio e-mail.</p></div></div>
   {% endif %}
   <form class="el-form" method="post" novalidate>
     {% csrf_token %}

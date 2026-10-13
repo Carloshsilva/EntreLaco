@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load entrelaco %}
-{% block titulo %}{% if edicao %}Editar termo{% else %}Novo termo{% endif %}{% endblock %}
+{% block titulo %}{% if edicao %}Editar termo{% elif vigente_do_tipo %}Nova versão do termo{% else %}Novo termo{% endif %}{% endblock %}
 {% block largura %}el-page-narrow{% endblock %}
 {% block conteudo %}
 <header class="el-pagehead">

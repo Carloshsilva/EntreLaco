@@ -24,7 +24,7 @@
     <div><dt>Tipo</dt><dd>{{ termo.get_tipo_display }}</dd></div>
     <div><dt>Versão</dt><dd>{{ termo.versao_do_termo }}</dd></div>
     <div><dt>Criado em</dt><dd><time datetime="{{ termo.criado_em|date:'c' }}">{{ termo.criado_em|date:"d/m/Y \à\s H:i" }}</time>{% if termo.criado_por %}, por {{ termo.criado_por.nome_curto }}{% endif %}</dd></div>
-    <div><dt>Usado em</dt><dd>{{ termo.usos }} autorizaç{{ termo.usos|pluralize:"ão,ões" }}</dd></div>
+    <div><dt>Usado em</dt><dd>{% if termo.usos %}{{ termo.usos }} autorizaç{{ termo.usos|pluralize:"ão,ões" }}{% else %}Nenhuma autorização ainda{% endif %}</dd></div>
   </dl>
   {% if not termo.vigente and vigente_do_tipo %}
   <p>A versão vigente é a <a href="{% url 'autorizacoes:termo_detalhe' vigente_do_tipo.pk %}">versão {{ vigente_do_tipo.versao_do_termo }}</a>. Esta continua guardada porque as autorizações colhidas com ela apontam para este texto.</p>

@@ -110,11 +110,6 @@ def coletas_do_aluno(servico, aluno):
     return {codigo: [c for c in coletas if c.tipo == codigo] for codigo in Tipo.values}
 
 
-def e_atual(autorizacao):
-    atual = autorizacao_atual(autorizacao.aluno, autorizacao.tipo)
-    return atual is not None and atual.pk == autorizacao.pk
-
-
 def com_tem_coleta(alunos):
     """Anota `tem_<tipo>` em cada aluno: se já existe alguma coleta daquele tipo."""
     return alunos.annotate(**{

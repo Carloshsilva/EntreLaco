@@ -3,6 +3,7 @@ import datetime
 import decimal
 
 from django.db import models
+from django.utils import timezone
 
 from .models import EventoAuditoria
 from .permissoes import grupo_do_campo
@@ -26,6 +27,8 @@ def valor_legivel(valor):
     if isinstance(valor, bool):
         return "Sim" if valor else "Não"
     if isinstance(valor, datetime.datetime):
+        if timezone.is_aware(valor):
+            valor = timezone.localtime(valor)
         return valor.strftime("%d/%m/%Y %H:%M")
     if isinstance(valor, datetime.date):
         return valor.strftime("%d/%m/%Y")

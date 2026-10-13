@@ -45,18 +45,25 @@ def preparar_campos(form):
 
 
 class MotivoDaAlteracaoMixin(forms.Form):
-    """Editar um dado já salvo pede o motivo (SEG-03)."""
+    """Editar um dado já salvo pede o motivo (SEG-03). Cada formulário pode trocar `exemplo_do_motivo`."""
+
+    exemplo_do_motivo = "a família corrigiu o telefone"
 
     motivo_alteracao = forms.CharField(
         label="Por que você está alterando?",
         max_length=500,
-        help_text="Fica registrado na trilha de auditoria. Exemplo: “a família corrigiu o telefone”.",
         widget=forms.Textarea(attrs={"rows": 2}),
-        error_messages={
-            "required": "Conte por que você está alterando, por exemplo “a família corrigiu o telefone”. "
-                        "O motivo fica na trilha de auditoria.",
-        },
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        motivo = self.fields.get("motivo_alteracao")
+        if motivo is not None:
+            exemplo = self.exemplo_do_motivo
+            motivo.help_text = f"Fica registrado na trilha de auditoria. Exemplo: “{exemplo}”."
+            motivo.error_messages["required"] = (
+                f"Conte por que você está alterando, por exemplo “{exemplo}”. O motivo fica na trilha de auditoria."
+            )
 
 
 def formulario_para(modelo, acesso, *, base=ModeloFormularioBase, campos=None, edicao=False, widgets=None):
