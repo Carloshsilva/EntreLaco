@@ -17,7 +17,9 @@
 <section class="el-card" aria-labelledby="passo2">
   <h2 id="passo2" class="el-heading">2. Leia o código com o aplicativo</h2>
   <div class="el-qr"><img src="{{ qr }}" alt="Código QR para cadastrar a EntreLaço no aplicativo autenticador" width="200" height="200"></div>
-  <p>Se não conseguir ler, digite esta chave no aplicativo:</p>
+  <p>Está usando o celular que tem o aplicativo? Ele não lê o código da própria tela. Toque no botão abaixo para abrir o aplicativo:</p>
+  <div class="el-actions"><a class="el-btn el-btn-secondary" href="{{ uri }}" hx-boost="false">{% icone "chave" %}Abrir no aplicativo autenticador</a></div>
+  <p>Se nada abrir, use a opção de digitar a chave no aplicativo (no Google Authenticator, “Inserir chave de configuração”), com o nome EntreLaço e esta chave:</p>
   <p class="el-data">{{ segredo }}</p>
 </section>
 <section class="el-card" aria-labelledby="passo3">

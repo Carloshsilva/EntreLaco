@@ -38,8 +38,11 @@
     <button type="button" class="el-btn el-btn-primary" data-copiar="link-senha" data-aviso="aviso-copia" hidden>{% icone "link" %}Copiar link</button>
   </div>
   <p id="aviso-copia" class="el-caption" role="status"></p>
+  {% email_ligado as ligado %}
   {% if link.email_enviado %}
   <p class="el-alert el-alert-info">{% icone "email" %}<span>O mesmo link também foi mandado para {{ pessoa.email }}.</span></p>
+  {% elif not ligado %}
+  <p class="el-alert el-alert-info">{% icone "email" %}<span>O envio de e-mail ainda não está ligado: mande o link pelo WhatsApp de trabalho.</span></p>
   {% else %}
   <p class="el-alert el-alert-warning">{% icone "alerta" %}<span>Não deu para mandar o link por e-mail agora. Mande pelo WhatsApp de trabalho.</span></p>
   {% endif %}
