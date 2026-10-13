@@ -88,3 +88,19 @@ jobs:
 
       - name: Montar a imagem
         run: docker build --tag entrelaco-web:ci .
+
+      # Sobe o banco e a aplicação como na VPS (usuário sem root, collectstatic do build) e espera a
+      # tela de entrar responder pelo healthcheck. Pega erro que só aparece com o contêiner rodando.
+      - name: Subir a aplicação e abrir a tela de entrar
+        run: |
+          sed -i -e "s|^DJANGO_SECRET_KEY=.*|DJANGO_SECRET_KEY=$(openssl rand -hex 32)|" \
+                 -e "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 16)|" .env
+          if ! docker compose up -d --build --wait --wait-timeout 240 db web; then
+            docker compose logs web
+            exit 1
+          fi
+          docker compose exec -T web python -c "import os, stat; m = os.stat('/app/staticfiles/staticfiles.json').st_mode; assert m & stat.S_IROTH, oct(m)"
+
+      - name: Desligar
+        if: always()
+        run: docker compose down -v
