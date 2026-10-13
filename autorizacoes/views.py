@@ -513,7 +513,7 @@ def _registrar_assinatura(request, autorizacao, form):
     """Grava a decisão, a assinatura e a prova (LGPD-03), com a trilha na mesma transação."""
     dados = form.cleaned_data
     with transaction.atomic():
-        atual = Autorizacao.objects.select_for_update().select_related("termo").get(pk=autorizacao.pk)
+        atual = Autorizacao.objects.select_for_update(of=("self",)).select_related("termo").get(pk=autorizacao.pk)
         if not regras.assinavel_no_tablet(atual):
             return False
         antes = fotografar(atual, CAMPOS_DA_ASSINATURA)

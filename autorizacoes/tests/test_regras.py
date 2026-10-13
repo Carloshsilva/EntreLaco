@@ -59,7 +59,7 @@ class ImpressaoDigitalTestes(SimpleTestCase):
     dados = {
         "texto_do_termo": "Texto inventado do termo.", "versao_do_termo": 2, "nome": "Rita Responsável Inventada",
         "documento": "RG inventado 123", "decisao": regras.DECISAO_AUTORIZO,
-        "colhida_em": datetime.datetime(2026, 10, 13, 14, 5, 7, tzinfo=datetime.timezone.utc),
+        "colhida_em": datetime.datetime(2026, 10, 13, 14, 5, 7, tzinfo=datetime.UTC),
         "assinatura": b"bytes inventados",
     }
 

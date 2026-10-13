@@ -14,7 +14,6 @@ from core.testes import (
 )
 from escolas.models import ContatoEscola
 
-
 PADRAO = object()
 
 

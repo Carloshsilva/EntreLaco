@@ -22,7 +22,7 @@ class ModeloFormularioBase(forms.ModelForm):
 
 
 def preparar_campos(form):
-    for nome, campo in form.fields.items():
+    for campo in form.fields.values():
         widget = campo.widget
         if isinstance(widget, (forms.CheckboxInput, forms.RadioSelect, forms.CheckboxSelectMultiple)):
             classe = "el-check"

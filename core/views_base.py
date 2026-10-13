@@ -13,8 +13,7 @@ import json
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core import signing
-from django.core.exceptions import FieldDoesNotExist
-from django.core.exceptions import ImproperlyConfigured, PermissionDenied
+from django.core.exceptions import FieldDoesNotExist, ImproperlyConfigured, PermissionDenied
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import render

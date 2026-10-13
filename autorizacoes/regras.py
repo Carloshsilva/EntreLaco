@@ -180,7 +180,7 @@ SEPARADOR = b"\x1f"
 
 def momento_iso(momento):
     """Data e hora em ISO 8601, em UTC e sem microssegundos, para a impressão digital."""
-    return momento.astimezone(datetime.timezone.utc).replace(microsecond=0).isoformat()
+    return momento.astimezone(datetime.UTC).replace(microsecond=0).isoformat()
 
 
 def agora_sem_microssegundos():

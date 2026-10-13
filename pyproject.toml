@@ -1,0 +1,21 @@
+[project]
+name = "entrelaco"
+version = "0.1.0"
+description = "EntreLaço: plataforma para serviços de educação hospitalar (primeira versão, só com dados fictícios)."
+readme = "README.md"
+requires-python = ">=3.12"
+
+# Verificação de estilo e de erros comuns (ruff check), também rodada no CI.
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["**/migrations/**", "staticfiles", "privado", ".privado-testes"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+# Mensagens para quem usa ficam numa linha só, para dar para achar o texto com uma busca.
+# As 120 colunas continuam como meta para o código.
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["config", "core", "equipe", "escolas", "alunos", "autorizacoes", "aulas", "reunioes", "documentos"]

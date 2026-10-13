@@ -12,7 +12,15 @@ from PIL import Image
 from aulas.models import Aula, HabilidadeBNCC
 from core.models import Vinculo
 from core.permissoes import Acesso
-from core.testes import criar_aluno, criar_apoio, criar_papel, criar_pessoa, criar_professor, criar_servico, criar_supervisao
+from core.testes import (
+    criar_aluno,
+    criar_apoio,
+    criar_papel,
+    criar_pessoa,
+    criar_professor,
+    criar_servico,
+    criar_supervisao,
+)
 from equipe.models import ComponenteCurricular
 
 HOJE = timezone.localdate

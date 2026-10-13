@@ -5,11 +5,10 @@ comuns: itens do menu, seções do perfil do aluno, pendências da tela inicial 
 eventos da agenda. Assim o núcleo não importa as apps, e ligar ou desligar uma
 app não mexe nas outras.
 """
-from dataclasses import dataclass, field
 import datetime
+from dataclasses import dataclass, field
 
 from django.urls import NoReverseMatch, reverse
-
 
 # ---------------------------------------------------------------- menu
 

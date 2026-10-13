@@ -113,7 +113,7 @@ class RevisaoDeAtivoTestes(BasePendencias):
         self.assertEqual(pendencias[0].prazo, dias_atras(1))
 
     def test_conta_aula_marcada_mudanca_e_cadastro(self):
-        sem_aula = self.aluno_antigo("Ivo Sem Aula", dias=22)
+        self.aluno_antigo("Ivo Sem Aula", dias=22)
         com_marcada = self.aluno_antigo("Jade Com Marcada")
         self.aula(com_marcada, dias_atras(30))
         self.aula(com_marcada, hoje() + datetime.timedelta(days=2), situacao="marcada")
