@@ -6,7 +6,7 @@ from django.db import models
 from django.utils import timezone
 
 from .models import EventoAuditoria
-from .permissoes import grupo_do_campo
+from .permissoes import CODIGOS_DE_GRUPO, grupo_do_campo
 
 Acao = EventoAuditoria.Acao
 
@@ -76,16 +76,37 @@ def comparar(modelo, antes, depois):
     return mudancas
 
 
+SEPARADOR_DE_GRUPOS = "+"
+
+
 def grupo_do_registro(obj):
     """Tipo de dado do registro inteiro, quando dá para dizer: o modelo pode definir `grupo_na_trilha()`;
     senão, vale o único tipo de GRUPOS_DE_CAMPOS. Modelo com vários tipos (a ficha do aluno) fica sem grupo
-    e a visibilidade é decidida campo a campo."""
+    e a visibilidade é decidida campo a campo.
+
+    `grupo_na_trilha()` pode devolver vários tipos (por exemplo, a citação de saúde numa ata): o evento
+    fica gravado como "atas+sensivel" e só aparece para quem vê todos eles."""
     if obj is None:
         return ""
     if hasattr(obj, "grupo_na_trilha"):
-        return obj.grupo_na_trilha() or ""
+        grupo = obj.grupo_na_trilha() or ""
+        if isinstance(grupo, (list, tuple, set, frozenset)):
+            return SEPARADOR_DE_GRUPOS.join(sorted(set(grupo)))
+        return grupo
     grupos = list(getattr(obj, "GRUPOS_DE_CAMPOS", {}) or {})
     return grupos[0] if len(grupos) == 1 else ""
+
+
+def grupos_do_evento(evento):
+    return [g for g in (evento.grupo or "").split(SEPARADOR_DE_GRUPOS) if g]
+
+
+def filtrar_visiveis(eventos, acesso):
+    """Tira do queryset os eventos de registros cujo tipo de dado a pessoa não vê (RF-07 na trilha)."""
+    for grupo in CODIGOS_DE_GRUPO:
+        if not acesso.pode_ver(grupo):
+            eventos = eventos.exclude(grupo__regex=rf"(^|\{SEPARADOR_DE_GRUPOS}){grupo}(\{SEPARADOR_DE_GRUPOS}|$)")
+    return eventos
 
 
 def registrar(request, acao, obj=None, *, mudancas=None, motivo="", descricao="", servico=None, aluno=None, usuario=None,
@@ -135,7 +156,7 @@ def mudancas_visiveis(evento, acesso):
 
 def evento_visivel(evento, acesso):
     """O evento inteiro some para quem não vê o tipo de dado do registro."""
-    return not evento.grupo or acesso.pode_ver(evento.grupo)
+    return all(acesso.pode_ver(grupo) for grupo in grupos_do_evento(evento))
 
 
 def preparar_para_exibir(eventos, acesso):
@@ -152,5 +173,7 @@ def preparar_para_exibir(eventos, acesso):
         evento.mudancas_permitidas = mudancas_visiveis(evento, acesso)
         evento.mudancas_escondidas = len(evento.mudancas or {}) - len(evento.mudancas_permitidas)
         evento.motivo_visivel = bool(evento.mudancas_permitidas) or not evento.mudancas
+        # O nome do registro de um aluno (objeto_repr) só aparece para quem vê a identificação.
+        evento.objeto_visivel = not evento.aluno_id or acesso.pode_ver("identificacao")
         visiveis.append(evento)
     return visiveis

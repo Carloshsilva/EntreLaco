@@ -203,6 +203,12 @@ class ProfessorDomiciliarTestes(BaseAlunos):
         self.assertNotContains(resposta, f'action="{self.url}"')
         self.assertContains(resposta, "A pendência está com Paula I.")
 
+    def test_quem_nao_ve_saude_nao_ve_o_bloco_que_revelaria_o_tmo(self):
+        self.entrar(self.so_ver)
+        resposta = self.client.get(reverse("alunos:detalhe", args=[self.aluno.pk]))
+        self.assertContains(resposta, "Alta do transplante.")
+        self.assertNotContains(resposta, "Professor domiciliar")
+
     def test_registrar_pede_a_observacao(self):
         self.entrar(self.professor)
         resposta = self.client.post(self.url, {"observacao": "  "})

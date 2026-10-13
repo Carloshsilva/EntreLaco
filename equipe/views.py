@@ -32,6 +32,7 @@ from django.views.generic import CreateView, FormView, TemplateView, UpdateView
 
 from core import auditoria
 from core.models import EventoAuditoria, Papel, Vinculo
+from core.permissoes import Acesso
 from core.views_base import AcessoMixin, CriarComAuditoriaMixin, EditarComAuditoriaMixin
 
 from .edicao import EdicaoSemVersaoMixin
@@ -53,12 +54,13 @@ PESSOAS_POR_PAGINA = 50
 
 def pode_gerir(request, vinculo):
     """Quem cuida da equipe mexe no cadastro de outra pessoa do serviço, com dois limites:
-    só quem configura mexe em quem configura (RF-03, RF-04), e ninguém do serviço mexe no
-    administrador da plataforma."""
+    só quem configura mexe em quem tem mais acesso do que ela (RF-03, RF-04), e ninguém do
+    serviço mexe no administrador da plataforma."""
     acesso = request.acesso
     if not acesso.tem("gerir_equipe"):
         return False
-    if vinculo.papel.pode_configurar and not acesso.configurar:
+    if not acesso.configurar and not acesso.cobre(Acesso.do_papel(vinculo.papel)):
+        # Quem só cuida da equipe não mexe em quem tem mais acesso do que ela.
         return False
     if vinculo.usuario.is_superuser and not request.user.is_superuser:
         return False

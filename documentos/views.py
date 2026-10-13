@@ -7,7 +7,6 @@
 - Não há exclusão nesta versão: a regra de guarda espera o advogado (LGPD-08).
 """
 import datetime
-import mimetypes
 
 from django import forms
 from django.conf import settings
@@ -23,7 +22,7 @@ from django.views.generic import CreateView, DetailView, UpdateView
 
 from alunos.models import Aluno
 from core import auditoria
-from core.arquivos import resumo_sha256, servir_arquivo
+from core.arquivos import e_imagem_guardada, resumo_sha256, servir_arquivo
 from core.formularios import DATA
 from core.models import EventoAuditoria
 from core.permissoes import EDITAR
@@ -39,8 +38,7 @@ CAMPOS_DA_EDICAO = ["tipo", "titulo", "data_documento", "observacoes"]
 
 
 def e_imagem(documento):
-    tipo, _ = mimetypes.guess_type(documento.arquivo.name or "")
-    return bool(tipo) and tipo.startswith("image/")
+    return e_imagem_guardada(documento.arquivo.name or "")
 
 
 def nome_para_baixar(documento):

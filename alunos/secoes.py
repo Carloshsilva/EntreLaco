@@ -68,6 +68,7 @@ def contexto_dos_responsaveis(request, aluno):
 def contexto_da_situacao(request, aluno):
     """Situação atual, histórico com motivo, pessoa e data (RF-11) e o professor domiciliar (RF-24)."""
     pode_mudar = request.acesso.tem("mudar_situacao")
+    ve_sensivel = request.acesso.pode_ver("sensivel")
     mudancas = list(
         aluno.mudancas_de_situacao.select_related("criado_por", "responsavel", "domiciliar_verificado_por")
         .order_by("-data", "-criado_em", "-pk")
@@ -78,18 +79,20 @@ def contexto_da_situacao(request, aluno):
             mudanca.e_alta and aluno.tmo and mudanca.domiciliar_verificado_em is None
             and aluno.situacao == Situacao.ENCERRADO
         )
-        mudanca.mostrar_domiciliar = mudanca.e_alta and aluno.tmo and (
-            mudanca.domiciliar_verificado_em is not None or verificar
+        responsavel_pela_saida = mudanca.responsavel_id is not None and mudanca.responsavel_id == request.user.pk
+        # O bloco só existe para quem fez TMO: quem não vê saúde só o vê se precisa registrar a decisão,
+        # senão o bloco contaria a essa pessoa quem fez TMO (RF-07).
+        mudanca.mostrar_domiciliar = (
+            mudanca.e_alta and aluno.tmo and (mudanca.domiciliar_verificado_em is not None or verificar)
+            and (ve_sensivel or pode_mudar or responsavel_pela_saida)
         )
-        mudanca.pode_registrar_domiciliar = verificar and (
-            pode_mudar or (mudanca.responsavel_id is not None and mudanca.responsavel_id == request.user.pk)
-        )
+        mudanca.pode_registrar_domiciliar = verificar and (pode_mudar or responsavel_pela_saida)
         if mudanca.pode_registrar_domiciliar:
             mudanca.form_domiciliar = FormularioDomiciliar(auto_id=f"id_domiciliar_{mudanca.pk}_%s")
     return {
         "mudancas": mudancas,
         "pode_mudar": pode_mudar,
-        "ve_sensivel": request.acesso.pode_ver("sensivel"),
+        "ve_sensivel": ve_sensivel,
     }
 
 

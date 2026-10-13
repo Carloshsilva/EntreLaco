@@ -76,6 +76,15 @@ class Acesso:
     def pode(self, grupo, modo):
         return self.pode_editar(grupo) if modo == EDITAR else self.pode_ver(grupo)
 
+    def cobre(self, outro):
+        """Se este acesso inclui tudo o que `outro` permite: cada tipo de dado no mesmo nível ou
+        abaixo, as mesmas ações ou menos e configurar só se este também configura."""
+        if outro.configurar and not self.configurar:
+            return False
+        if not outro.acoes <= self.acoes:
+            return False
+        return all(_ORDEM[outro.nivel(g)] <= _ORDEM[self.nivel(g)] for g in CODIGOS_DE_GRUPO)
+
 
 ACESSO_VAZIO = Acesso()
 

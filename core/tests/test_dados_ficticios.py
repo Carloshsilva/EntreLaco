@@ -213,7 +213,7 @@ class CargaTestes(PastaPrivadaTemporaria, TestCase):
         # A citação de saúde fica com o tipo de dado dela na trilha.
         saude = CitacaoDeAluno.objects.get(servico=self.servico, grupo_de_dado="sensivel")
         evento = eventos.get(modelo="reunioes.CitacaoDeAluno", objeto_id=str(saude.pk))
-        self.assertEqual(evento.grupo, "sensivel")
+        self.assertEqual(evento.grupo, "atas+sensivel")
         self.assertEqual({m["grupo"] for m in evento.mudancas.values()}, {"sensivel"})
 
     def test_senha_dada_vale_para_todos_e_duas_etapas_fica_para_o_primeiro_login(self):

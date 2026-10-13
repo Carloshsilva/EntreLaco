@@ -3,7 +3,7 @@
 <ol class="el-trail">
   {% for evento in eventos %}
   <li class="el-trail-item">
-    <p><strong>{{ evento.usuario_nome|default:"Sistema" }}</strong> {% if evento.acao == "outro" and evento.descricao %}{{ evento.descricao|lower }}{% else %}{{ evento.get_acao_display|lower }}{% if evento.tipo_de_registro %} {{ evento.tipo_de_registro }}{% endif %}{% if mostrar_objeto %}: {{ evento.objeto_repr }}{% endif %}{% endif %}</p>
+    <p><strong>{{ evento.usuario_nome|default:"Sistema" }}</strong> {% if evento.acao == "outro" and evento.descricao %}{{ evento.descricao|lower }}{% else %}{{ evento.get_acao_display|lower }}{% if evento.tipo_de_registro %} {{ evento.tipo_de_registro }}{% endif %}{% if mostrar_objeto and evento.objeto_visivel %}: {{ evento.objeto_repr }}{% endif %}{% endif %}</p>
     <p class="el-caption"><time datetime="{{ evento.criado_em|date:'c' }}">{{ evento.criado_em|date:"d/m/Y \à\s H:i" }}</time>{% if evento.descricao and evento.acao != "outro" %} · {{ evento.descricao }}{% endif %}</p>
     {% if evento.motivo and evento.motivo_visivel %}<p>Motivo: {{ evento.motivo }}</p>{% endif %}
     {% if evento.mudancas_escondidas and evento.acao != "criou" %}<p class="el-caption">{{ evento.mudancas_escondidas }} alteraç{{ evento.mudancas_escondidas|pluralize:"ão,ões" }} em dados que o seu papel não vê.</p>{% endif %}

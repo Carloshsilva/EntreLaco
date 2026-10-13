@@ -88,8 +88,9 @@ class CitacaoDeAluno(ModeloDoServico):
         return f"{self.aluno} na {self.reuniao}"
 
     def grupo_na_trilha(self):
-        """Na trilha, a citação de saúde fica com o tipo dela: quem não vê saúde não vê o evento."""
-        return self.grupo_de_dado
+        """Na trilha, a citação vale como ata e como o tipo dela: só vê o evento quem vê os dois,
+        a mesma regra de `visivel_para`."""
+        return ("atas", self.grupo_de_dado)
 
     def visivel_para(self, acesso):
         return acesso.pode_ver("atas") and acesso.pode_ver(self.grupo_de_dado)

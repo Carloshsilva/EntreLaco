@@ -13,7 +13,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
-from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
@@ -28,7 +27,6 @@ from . import auditoria
 from .formularios import FormularioBase, preparar_campos
 from .middleware import CHAVE_SERVICO, precisa_duas_etapas
 from .models import EventoAuditoria, Vinculo
-from .permissoes import CODIGOS_DE_GRUPO
 from .registro import eventos_da_agenda, pendencias_para
 
 CHAVE_USUARIO_PENDENTE = "entrar_usuario_pendente"
@@ -399,7 +397,7 @@ def trilha(request):
         eventos = eventos.filter(usuario_id=int(pessoa))
     if acao in EventoAuditoria.Acao.values:
         eventos = eventos.filter(acao=acao)
-    eventos = eventos.filter(Q(grupo="") | Q(grupo__in=[g for g in CODIGOS_DE_GRUPO if request.acesso.pode_ver(g)]))
+    eventos = auditoria.filtrar_visiveis(eventos, request.acesso)
     pagina = Paginator(eventos, 50).get_page(request.GET.get("pagina"))
     pagina.object_list = auditoria.preparar_para_exibir(list(pagina.object_list), request.acesso)
     pessoas = get_user_model().objects.filter(vinculos__servico=request.servico).order_by("nome").distinct()
@@ -426,7 +424,7 @@ def eventos_do_objeto(request, obj, limite=20):
 def eventos_do_aluno(request, aluno_id, limite=30):
     """Tudo o que aconteceu com um aluno, em qualquer cadastro ligado a ele."""
     eventos = EventoAuditoria.objects.filter(servico=request.servico, aluno_id=aluno_id)
-    eventos = eventos.filter(Q(grupo="") | Q(grupo__in=[g for g in CODIGOS_DE_GRUPO if request.acesso.pode_ver(g)]))
+    eventos = auditoria.filtrar_visiveis(eventos, request.acesso)
     return auditoria.preparar_para_exibir(list(eventos[:limite]), request.acesso)
 
 

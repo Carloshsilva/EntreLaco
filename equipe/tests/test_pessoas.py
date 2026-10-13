@@ -178,6 +178,24 @@ class CadastrarPessoaTestes(EquipeTestCase):
         self.assertNotContains(de_novo, link)
         self.assertNotContains(de_novo, "Copiar link")
 
+    def test_nao_da_papel_com_mais_acesso_que_o_proprio(self):
+        # A secretaria cuida da equipe, mas só vê a identificação: não cria conta que vê saúde
+        # nem mexe em quem vê mais do que ela.
+        papel_secretaria = criar_papel(self.servico, "Secretaria inventada", ver=["identificacao"],
+                                       acoes=["gerir_equipe"])
+        secretaria = criar_pessoa(self.servico, papel_secretaria, nome="Sara Secretaria Inventada",
+                                  email="sara@exemplo.org")
+        papel_recepcao = criar_papel(self.servico, "Recepção inventada", ver=["identificacao"])
+        self.entrar(secretaria)
+        tela = self.client.get(reverse("equipe:pessoa_nova"))
+        self.assertEqual(list(tela.context["form"].fields["papel"].queryset), [papel_recepcao, papel_secretaria])
+        resposta = self.client.post(reverse("equipe:pessoa_nova"), self.dados())
+        self.assertEqual(resposta.status_code, 200)
+        self.assertFalse(Usuario.objects.filter(email="nina.nova@exemplo.org").exists())
+        self.assertEqual(
+            self.client.get(reverse("equipe:pessoa_editar", args=[self.professor.pk])).status_code, 403
+        )
+
     def test_link_de_senha_funciona(self):
         self.entrar(self.coordenacao)
         self.client.post(reverse("equipe:pessoa_nova"), self.dados())

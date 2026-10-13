@@ -51,6 +51,8 @@ Os requisitos citados (RF, RNF, SEG, LGPD) estão em [requisitos.md](requisitos.
   (os mixins de auditoria) sempre exigem editar o `grupo`, qualquer que seja a ordem dos mixins.
   Views em função conferem `request.acesso.pode_ver(grupo)`, `pode_editar(grupo)` e `tem(acao)` e
   levantam `PermissionDenied`.
+- Quem cuida da equipe sem configurar o serviço só dá papéis e só mexe em pessoas cujo acesso cabe no
+  dela (`Acesso.cobre`): nenhum tipo de dado a mais, nenhuma ação a mais.
 - Templates: `{% if acesso|pode_ver:"sensivel" %}`, `{% if acesso|pode_editar:"aulas" %}`,
   `{% if acesso|tem_acao:"mudar_situacao" %}`. Botão que a pessoa não pode usar não aparece.
 - Um dado escondido some de tudo: tela, lista, busca, resumo, PDF e trilha (`auditoria.preparar_para_exibir`).
@@ -64,8 +66,10 @@ Os requisitos citados (RF, RNF, SEG, LGPD) estão em [requisitos.md](requisitos.
   revogada (`Acao.ASSINOU`/`Acao.ALTEROU`), abertura de documento (`Acao.BAIXOU_ARQUIVO`), validação
   (`Acao.VALIDOU`), papel e permissão (`Acao.MUDOU_PAPEL`, `Acao.LIBEROU_PERMISSAO`) e exclusão (`Acao.EXCLUIU`).
 - Cada evento guarda o tipo de dado do registro (`grupo`): o único tipo de `GRUPOS_DE_CAMPOS`, ou o que o
-  modelo devolve em `grupo_na_trilha()` (a citação de saúde fica com o tipo dela). Quem não vê esse tipo
-  não vê o evento, nem o motivo. Em modelos com vários tipos (a ficha do aluno), cada mudança é filtrada
+  modelo devolve em `grupo_na_trilha()`. Ele pode devolver vários tipos: a citação em ata grava
+  "atas+sensivel", e só vê o evento quem vê todos eles. Quem não vê o tipo não vê o evento, nem o motivo.
+  Consultas de eventos passam por `auditoria.filtrar_visiveis(queryset, request.acesso)`. O nome do
+  registro de um aluno só aparece na trilha para quem vê a identificação. Em modelos com vários tipos (a ficha do aluno), cada mudança é filtrada
   campo a campo, e o motivo só aparece para quem vê alguma das mudanças.
 - Para mudar o que vai para a trilha (por exemplo, nomes em vez de ids), sobrescreva
   `mudancas_para_trilha(obj, mudancas)` no mixin de criar ou editar.
@@ -108,6 +112,9 @@ Cada app registra no seu `encaixes.py` (importado pelo `ready()` do AppConfig):
 - Os arquivos ficam em `MEDIA_ROOT`, fora da pasta pública, e **só** saem por uma view que confere login,
   serviço e permissão. Nunca use `.url` de um arquivo em template; aponte para a view de download.
 - Links para arquivos levam `hx-boost="false"`.
+- O tipo do arquivo vem do conteúdo, e o nome guardado tem a extensão certa (um PDF é sempre `.pdf`). Na
+  entrega, só JPG, PNG, WEBP, PDF e TXT saem com o próprio tipo (`tipo_do_arquivo`); o resto desce como
+  arquivo genérico. Só imagens abrem na aba.
 
 ## Telas: padrão visual e de acessibilidade (WCAG 2.2 AA)
 
@@ -172,4 +179,6 @@ escola e o painel vivo (RF-23, RF-30 a RF-37); link de assinatura para o celular
 "link"); leitura por foto, áudio e IA (RF-51 a RF-53); notificações por e-mail e push (RF-47, RF-49, RF-50);
 agenda externa (RF-45); indicadores e atestado (RF-54, RF-56, RF-57); formulários, fluxos e modelos
 configuráveis (RF-58 a RF-61, RF-63); mudança manual da ordem de atendimento (RF-46); salvamento de cada
-campo na hora (RNF-03, hoje o formulário inteiro é enviado e, sem internet, fica na tela até a conexão voltar).
+campo na hora (RNF-03, hoje o formulário inteiro é enviado e, sem internet, fica na tela até a conexão voltar);
+convite com aceite para incluir na equipe quem já trabalha em outro serviço (hoje o vínculo é criado na hora
+pelo e-mail; com um serviço só, isso não acontece).

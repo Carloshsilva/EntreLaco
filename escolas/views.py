@@ -141,7 +141,8 @@ class NovaEscola(AcessoMixin, CreateView):
         request = self.request
         with transaction.atomic():
             escola = form.save(commit=False)
-            escola.fonte = f"Cadastrada por {request.servico.nome}"[:120]
+            # A base é comum: o nome do serviço que cadastrou não aparece para os outros (SEG-05).
+            escola.fonte = "Cadastrada por um serviço da EntreLaço"
             escola.save()
             campos = [nome for nome in form.fields if nome in FormularioEscola.Meta.fields]
             mudancas = auditoria.comparar(Escola, {}, auditoria.fotografar(escola, campos))

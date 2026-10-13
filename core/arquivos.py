@@ -7,7 +7,6 @@
 """
 import hashlib
 import io
-import mimetypes
 import uuid
 
 from django.conf import settings
@@ -17,6 +16,21 @@ from django.http import FileResponse, Http404
 
 TIPOS_DE_IMAGEM = {"JPEG": ("image/jpeg", "jpg"), "PNG": ("image/png", "png"), "WEBP": ("image/webp", "webp")}
 PDF = ("application/pdf", "pdf")
+# Únicos tipos que a plataforma entrega com o próprio nome; o resto desce como arquivo genérico.
+TIPO_PELA_EXTENSAO = {
+    "jpg": "image/jpeg", "jpeg": "image/jpeg", "png": "image/png", "webp": "image/webp",
+    "pdf": "application/pdf", "txt": "text/plain; charset=utf-8",
+}
+
+
+def tipo_do_arquivo(nome):
+    """Tipo (MIME) de um arquivo guardado, pela lista fechada acima: nunca HTML, SVG ou script."""
+    extensao = nome.rsplit(".", 1)[-1].lower() if "." in (nome or "") else ""
+    return TIPO_PELA_EXTENSAO.get(extensao, "application/octet-stream")
+
+
+def e_imagem_guardada(nome):
+    return tipo_do_arquivo(nome).startswith("image/")
 
 
 def _caminho(instancia, nome_original, pasta):
@@ -103,6 +117,8 @@ def validar_documento(arquivo):
     validar_tamanho(arquivo)
     if _e_pdf(arquivo):
         arquivo.seek(0)
+        # O nome guardado sempre termina em .pdf, qualquer que seja o nome enviado.
+        arquivo.name = "documento.pdf"
         return arquivo
     if _abrir_imagem(arquivo) is not None:
         return limpar_imagem(arquivo, nome_base="documento")
@@ -127,12 +143,10 @@ def servir_arquivo(campo_arquivo, nome_para_download, *, inline=True):
         aberto = campo_arquivo.open("rb")
     except FileNotFoundError as erro:
         raise Http404("Arquivo não encontrado.") from erro
-    tipo, _ = mimetypes.guess_type(campo_arquivo.name)
+    tipo = tipo_do_arquivo(campo_arquivo.name)
     # Só imagens abrem na própria aba; PDF e o resto descem como arquivo.
-    inline = inline and bool(tipo) and tipo.startswith("image/")
-    resposta = FileResponse(
-        aberto, as_attachment=not inline, filename=nome_para_download, content_type=tipo or "application/octet-stream"
-    )
+    inline = inline and tipo.startswith("image/")
+    resposta = FileResponse(aberto, as_attachment=not inline, filename=nome_para_download, content_type=tipo)
     resposta["Cache-Control"] = "private, no-store"
     resposta["X-Content-Type-Options"] = "nosniff"
     resposta["Content-Security-Policy"] = "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; sandbox"

@@ -12,7 +12,7 @@ from django.db.models import Q
 
 from core.formularios import FormularioBase, ModeloFormularioBase, MotivoDaAlteracaoMixin, preparar_campos
 from core.models import Papel, Vinculo
-from core.permissoes import ACOES, CODIGOS_DE_ACAO, GRUPOS_DE_DADOS, NENHUM, NIVEIS, nivel_valido
+from core.permissoes import ACOES, CODIGOS_DE_ACAO, GRUPOS_DE_DADOS, NENHUM, NIVEIS, Acesso, nivel_valido
 
 from .models import ComponenteCurricular, PerfilProfessor
 
@@ -50,13 +50,16 @@ class CampoPapel(forms.ModelChoiceField):
 def papeis_que_pode_dar(servico, acesso):
     """Papéis do serviço que a pessoa logada pode dar a alguém.
 
-    Papel que configura o serviço só é dado por quem também configura: quem só cuida da
-    equipe não consegue, assim, dar a alguém mais permissão do que tem (RF-03, RF-04).
+    Quem configura o serviço dá qualquer papel. Quem só cuida da equipe dá apenas papéis que
+    cabem dentro do próprio acesso: nenhum tipo de dado a mais, nenhuma ação a mais e nunca um
+    papel que configura. Assim ninguém cria uma conta com mais permissão do que tem e entra
+    com ela (RF-03, RF-04).
     """
     papeis = Papel.objects.filter(servico=servico).order_by("nome")
-    if not acesso.configurar:
-        papeis = papeis.exclude(pode_configurar=True)
-    return papeis
+    if acesso.configurar:
+        return papeis
+    permitidos = [papel.pk for papel in papeis if acesso.cobre(Acesso.do_papel(papel))]
+    return papeis.filter(pk__in=permitidos)
 
 
 def limpar_whatsapp(valor):
@@ -110,7 +113,7 @@ class PessoaNovaForm(FormularioBase):
         self.servico = servico
         self.fields["papel"].queryset = papeis_que_pode_dar(servico, acesso)
         if not acesso.configurar:
-            self.fields["papel"].help_text += " Papéis que configuram o serviço só podem ser dados por quem configura."
+            self.fields["papel"].help_text += " Aparecem só os papéis com acesso igual ou menor que o seu."
 
     def clean_email(self):
         email = self.cleaned_data["email"].strip().lower()
@@ -164,7 +167,7 @@ class PessoaEditarForm(FormularioBase, MotivoDaAlteracaoMixin):
             self.fields["papel"].help_text = "Você não muda o próprio papel. Se precisar, peça a outra pessoa que cuida da equipe."
             self.fields["papel"].queryset = Papel.objects.filter(servico=servico)
         elif not acesso.configurar:
-            self.fields["papel"].help_text += " Papéis que configuram o serviço só podem ser dados por quem configura."
+            self.fields["papel"].help_text += " Aparecem só os papéis com acesso igual ou menor que o seu."
 
     def clean_nome(self):
         if self.fields["nome"].disabled:

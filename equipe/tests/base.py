@@ -2,6 +2,7 @@
 from django.test import TestCase
 
 from core.models import EventoAuditoria
+from core.permissoes import CODIGOS_DE_ACAO
 from core.testes import criar_apoio, criar_papel, criar_pessoa, criar_professor, criar_servico, criar_supervisao
 
 
@@ -15,7 +16,11 @@ class EquipeTestCase(TestCase):
         cls.outro_servico = criar_servico("Classe Hospitalar Fictícia")
         cls.supervisao = criar_supervisao(cls.servico, nome="Sueli Supervisora Inventada", email="sueli@exemplo.org")
         cls.papel_supervisao = cls.supervisao.vinculos.get().papel
-        cls.papel_coordenacao = criar_papel(cls.servico, "Coordenação de equipe", acoes=["gerir_equipe"])
+        # Coordenação cuida da equipe sem configurar o serviço; vê e edita tudo, então pode dar os
+        # papéis de professor e de apoio (ninguém dá papel com mais acesso que o próprio).
+        cls.papel_coordenacao = criar_papel(
+            cls.servico, "Coordenação de equipe", tudo="editar", acoes=list(CODIGOS_DE_ACAO)
+        )
         cls.coordenacao = criar_pessoa(
             cls.servico, cls.papel_coordenacao, nome="Caio Coordenador Inventado", email="caio@exemplo.org"
         )

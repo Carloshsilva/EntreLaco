@@ -1,7 +1,11 @@
 """Editar a ficha: permissão por tipo de dado, motivo obrigatório, trilha e conflito de edição (RNF-04)."""
+from unittest import mock
+
+from django.db.models import F
 from django.test import Client
 from django.urls import reverse
 
+from alunos import formularios
 from alunos.models import Aluno
 
 from .base import DIAGNOSTICO, Acao, BaseAlunos, dados_do_formulario
@@ -123,3 +127,34 @@ class ConflitoDeEdicaoTestes(BaseAlunos):
         self.assertEqual(self.aluno.leito, "20A")
         self.assertEqual(self.aluno.unidade, "Pediatria Fictícia")
         self.assertEqual(self.aluno.versao, 3)
+
+
+class GravacaoNoMeioDoCaminhoTestes(BaseAlunos):
+    """Outra pessoa grava campos que esta pessoa nem vê entre abrir e salvar: nada disso é desfeito."""
+
+    def test_salvar_a_vida_escolar_nao_desfaz_o_que_foi_gravado_no_meio(self):
+        url = reverse("alunos:editar", args=[self.aluno.pk])
+        self.entrar(self.apoio)
+        tela = self.client.get(url)
+        dados = dados_do_formulario(
+            tela.context["form"], turma="4º B", motivo_alteracao="A escola mandou a turma nova.",
+            estado_original=tela.context["estado_original"],
+        )
+        original = formularios.FormularioAlunoBase.clean
+        pk = self.aluno.pk
+
+        def clean_com_outra_gravacao(form):
+            # Outra pessoa grava depois de a tela do apoio ler o aluno e antes da trava do salvar.
+            Aluno.objects.filter(pk=pk).update(
+                diagnostico="Diagnóstico corrigido por outra pessoa", situacao=Aluno.Situacao.PAUSA,
+                versao=F("versao") + 1,
+            )
+            return original(form)
+
+        with mock.patch.object(formularios.FormularioAlunoBase, "clean", clean_com_outra_gravacao):
+            resposta = self.client.post(url, dados)
+        self.assertEqual(resposta.status_code, 302)
+        self.aluno.refresh_from_db()
+        self.assertEqual(self.aluno.turma, "4º B")
+        self.assertEqual(self.aluno.diagnostico, "Diagnóstico corrigido por outra pessoa")
+        self.assertEqual(self.aluno.situacao, Aluno.Situacao.PAUSA)

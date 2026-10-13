@@ -184,6 +184,12 @@ class EditarComAuditoriaMixin(FormularioPorPermissaoMixin):
                     form.cleaned_data[nome] = list(getattr(atual, nome).all())
                 else:
                     setattr(form.instance, campo_modelo.attname, getattr(atual, campo_modelo.attname))
+            # Colunas fora deste formulário ficam como estão no banco agora: salvar a ficha não desfaz,
+            # sem registro, o que outra pessoa gravou em campos que esta pessoa nem vê.
+            campos_do_formulario = set(form.fields)
+            for campo_modelo in modelo._meta.concrete_fields:
+                if not campo_modelo.primary_key and campo_modelo.name not in campos_do_formulario:
+                    setattr(form.instance, campo_modelo.attname, getattr(atual, campo_modelo.attname))
             antes = auditoria.fotografar(atual, campos)
             obj = form.save(commit=False)
             obj.versao = atual.versao + 1
