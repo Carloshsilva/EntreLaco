@@ -1,0 +1,21 @@
+{% extends "base_simples.html" %}
+{% block titulo %}Entrar{% endblock %}
+{% block conteudo %}
+<p class="el-auth-brand">EntreLaço</p>
+<div class="el-card el-auth-card">
+  <h1 class="el-title">Entrar</h1>
+  {% include "core/_mensagens.html" %}
+  {% if assinatura_ok %}
+  <div class="el-alert el-alert-success" role="status"><div><p>Resposta registrada, agradecemos. Para continuar, a pessoa da equipe entra de novo com o próprio e-mail.</p></div></div>
+  {% endif %}
+  <form class="el-form" method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    {% include "core/_erros_do_formulario.html" %}
+    {% include "core/_campo.html" with campo=form.email %}
+    {% include "core/_campo.html" with campo=form.senha %}
+    <button type="submit" class="el-btn el-btn-primary el-btn-block">Entrar</button>
+  </form>
+  <p><a href="{% url 'senha_esqueci' %}">Esqueci a senha</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% load entrelaco %}{# Recebe `pagina` (Page do Paginator). Usa o parâmetro ?pagina=. #}
+{% if pagina.has_other_pages %}
+<nav class="el-pagination" aria-label="Páginas">
+  {% if pagina.has_previous %}<a class="el-btn el-btn-secondary" href="?{% com_parametros pagina=pagina.previous_page_number %}">{% icone "voltar" %}Anterior</a>{% else %}<span></span>{% endif %}
+  <span class="el-caption">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+  {% if pagina.has_next %}<a class="el-btn el-btn-secondary" href="?{% com_parametros pagina=pagina.next_page_number %}">Próxima{% icone "avancar" %}</a>{% else %}<span></span>{% endif %}
+</nav>
+{% endif %}

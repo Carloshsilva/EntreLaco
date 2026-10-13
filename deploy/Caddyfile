@@ -1,0 +1,30 @@
+# Caddy: recebe as visitas, cuida do HTTPS (certificado automático) e repassa para o Django.
+# O domínio vem da variável DOMINIO do arquivo .env. O DNS do domínio precisa apontar para a VPS
+# antes de subir, senão o certificado não é emitido.
+
+{$DOMINIO} {
+	# Registro de acesso na saída padrão: docker compose logs caddy
+	log
+
+	# Respostas comprimidas: telas mais leves no celular.
+	encode zstd gzip
+
+	# Fotos e documentos têm até 10 MB; nada maior chega ao Django.
+	request_body {
+		max_size 15MB
+	}
+
+	header {
+		# O navegador passa a usar só HTTPS neste domínio (30 dias, o mesmo prazo do Django).
+		Strict-Transport-Security "max-age=2592000"
+		-Server
+		# Aplica depois da resposta do Django, para não repetir cabeçalhos.
+		defer
+	}
+
+	# Arquivos enviados (fotos, documentos, assinaturas) nunca saem direto daqui:
+	# só pelas telas do Django, que conferem login, serviço e permissão.
+	respond /arquivos-protegidos/* 404
+
+	reverse_proxy web:8000
+}

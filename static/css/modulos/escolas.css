@@ -1,0 +1,15 @@
+/* Estilos próprios do módulo escolas. Use os tokens de tokens.css e o prefixo el-. */
+
+/* Filtros da lista: as caixas de marcar ficam lado a lado e quebram de linha no celular. */
+.el-filters .el-escolas-filtros { flex: 2 1 320px; max-width: none; }
+.el-escolas-opcoes { display: flex; flex-wrap: wrap; gap: 0 var(--space-5); }
+.el-escolas-opcoes .el-check-row { padding: 0; align-items: center; }
+
+/* Observações ocupam a linha inteira nas definições de duas colunas. */
+.el-dl-cols > .el-escolas-dl-inteira { grid-column: 1 / -1; }
+
+/* Município, UF e INEP numa linha própria, abaixo do nome da escola. */
+.el-escolas-linha { display: block; margin-top: 2px; }
+
+/* Contato da escola dentro da seção do perfil do aluno. */
+.el-escolas-contato-aluno { display: grid; gap: var(--space-3); border-top: 1px solid var(--line); padding-top: var(--space-3); }

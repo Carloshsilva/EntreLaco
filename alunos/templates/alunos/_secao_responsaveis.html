@@ -1,0 +1,27 @@
+{% load entrelaco alunos_extras %}{# Seção "Responsáveis" do perfil. Recebe `dados` (alunos.secoes.contexto_dos_responsaveis), `aluno`. #}
+{% if dados.responsaveis %}
+<ul class="el-list-plain">
+  {% for r in dados.responsaveis %}
+  <li class="el-alunos-responsavel">
+    <div class="el-card-head">
+      <h3 class="el-label-text">{{ r.nome }}</h3>
+      {% if dados.pode_editar %}<a class="el-btn el-btn-quiet" href="{% url 'alunos:responsavel_editar' r.pk %}">{% icone "editar" %}Editar<span class="el-sr-only"> {{ r.nome }}</span></a>{% endif %}
+    </div>
+    <p class="el-cluster">{{ r.get_parentesco_display }}{% if r.responsavel_legal %} <span class="el-badge el-badge-laco">Responsável legal</span>{% endif %}</p>
+    <dl class="el-dl el-dl-cols">
+      <div>
+        <dt>Telefone</dt>
+        <dd>{% if r.telefone %}<a href="tel:{{ r.telefone|link_de_telefone }}">{{ r.telefone }}</a>{% if r.tem_whatsapp %} · tem WhatsApp{% endif %}{% else %}Não informado{% endif %}</dd>
+      </div>
+      <div><dt>E-mail</dt><dd>{% if r.email %}<a href="mailto:{{ r.email }}">{{ r.email }}</a>{% else %}Não informado{% endif %}</dd></div>
+      {% if r.observacoes %}<div class="el-alunos-dl-inteira"><dt>Observações</dt><dd>{{ r.observacoes }}</dd></div>{% endif %}
+    </dl>
+  </li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="el-muted">Nenhum responsável cadastrado ainda.</p>
+{% endif %}
+{% if dados.pode_editar %}
+<p><a class="el-btn el-btn-secondary" href="{% url 'alunos:responsavel_novo' aluno.pk %}">{% icone "mais" %}Adicionar responsável</a></p>
+{% endif %}

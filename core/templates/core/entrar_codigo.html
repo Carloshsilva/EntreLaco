@@ -1,0 +1,17 @@
+{% extends "base_simples.html" %}
+{% block titulo %}Código de verificação{% endblock %}
+{% block conteudo %}
+<p class="el-auth-brand">EntreLaço</p>
+<div class="el-card el-auth-card">
+  <h1 class="el-title">Digite o código</h1>
+  <p>Seu acesso pede verificação em duas etapas.</p>
+  <form class="el-form" method="post" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    {% include "core/_erros_do_formulario.html" %}
+    {% include "core/_campo.html" with campo=form.codigo %}
+    <button type="submit" class="el-btn el-btn-primary el-btn-block">Confirmar</button>
+  </form>
+  <p><a href="{% url 'entrar' %}">Voltar e entrar com outro e-mail</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% load entrelaco %}{% comment %}
+Uma citação de aluno. Recebe `c` (CitacaoDeAluno passada por consultas.preparar_citacoes) e `por`:
+"aluno" (na tela da reunião: o título é o aluno) ou "reuniao" (no perfil do aluno: o título é a reunião,
+e `c.reuniao` precisa vir no select_related). Opcional: `proximo`, para onde voltar depois de concluir.
+{% endcomment %}
+<div class="el-reunioes-citacao-topo">
+  {% if por == "reuniao" %}
+  <h3 class="el-label-text"><a href="{% url 'reunioes:detalhe' c.reuniao_id %}#citacao-{{ c.pk }}">{{ c.reuniao.titulo }}</a> <span class="el-caption">de <time datetime="{{ c.reuniao.data|date:'Y-m-d' }}">{{ c.reuniao.data|date:"d/m/Y" }}</time></span></h3>
+  {% else %}
+  {% url 'alunos:detalhe' c.aluno_id as url_do_aluno %}
+  <h3 class="el-label-text">{% if url_do_aluno and acesso|pode_ver:"identificacao" %}<a href="{{ url_do_aluno }}#secao-citacoes">{{ c.aluno.nome_curto }}</a>{% else %}{{ c.aluno.nome_curto }}{% endif %}</h3>
+  {% endif %}
+  <p class="el-reunioes-selos">
+    {% if c.grupo_de_dado != "atas" %}<span class="el-badge"><span class="el-sr-only">Tipo de dado: </span>{{ c.get_grupo_de_dado_display }}</span>{% endif %}
+    {% include "reunioes/_encaminhamento.html" %}
+  </p>
+</div>
+<dl class="el-dl el-reunioes-dl">
+  <div class="el-reunioes-inteiro"><dt>O que foi dito</dt><dd class="el-prose">{{ c.texto }}</dd></div>
+  {% if c.encaminhamento or c.responsavel_id %}
+  <div class="el-reunioes-inteiro"><dt>Encaminhamento</dt><dd class="el-prose">{{ c.encaminhamento|default:"Não descrito" }}</dd></div>
+  <div><dt>Responsável</dt><dd>{% if c.responsavel_id %}{{ c.responsavel.nome_curto }}{% if c.responsavel_id == user.pk %} (você){% endif %}{% else %}Ninguém por enquanto{% endif %}</dd></div>
+  <div><dt>Prazo</dt><dd>{% if c.prazo %}<time datetime="{{ c.prazo|date:'Y-m-d' }}">{{ c.prazo|date:"d/m/Y" }}</time>{% else %}Sem prazo{% endif %}</dd></div>
+  {% endif %}
+</dl>
+{% if c.mostrar_concluir or acesso|pode_editar:"atas" %}
+<div class="el-actions">
+  {% if c.mostrar_concluir %}
+  <form method="post" action="{% url 'reunioes:citacao_concluir' c.pk %}">
+    {% csrf_token %}{% if proximo %}<input type="hidden" name="proximo" value="{{ proximo }}">{% endif %}
+    <button type="submit" class="el-btn el-btn-secondary">{% icone "check" %}Concluir encaminhamento<span class="el-sr-only">{% if por == "reuniao" %}, {{ c.reuniao.titulo }} de {{ c.reuniao.data|date:"d/m" }}{% else %} de {{ c.aluno.nome_curto }}{% endif %}</span></button>
+  </form>
+  {% endif %}
+  {% if acesso|pode_editar:"atas" %}
+  <a class="el-btn el-btn-quiet" href="{% url 'reunioes:citacao_editar' c.pk %}">{% icone "editar" %}Editar citação<span class="el-sr-only">{% if por == "reuniao" %}, {{ c.reuniao.titulo }} de {{ c.reuniao.data|date:"d/m" }}{% else %} de {{ c.aluno.nome_curto }}{% endif %}</span></a>
+  {% endif %}
+</div>
+{% endif %}

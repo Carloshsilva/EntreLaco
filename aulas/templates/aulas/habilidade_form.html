@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{% if object %}Editar habilidade{% else %}Cadastrar habilidade{% endif %}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+{% url 'aulas:habilidades' as url_habilidades %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{{ url_habilidades }}">{% icone "seta-voltar" %}Lista da BNCC</a></p>
+    <h1 class="el-display">{% if object %}Editar a habilidade {{ object.codigo }}{% else %}Cadastrar habilidade{% endif %}</h1>
+    <p class="el-muted">Use o código e o texto da BNCC. Para tirar uma habilidade do registro de aula, desmarque Ativa.</p>
+  </div>
+</header>
+{% include "core/_formulario.html" with botao="Salvar habilidade" cancelar=url_habilidades %}
+{% if object %}
+<section class="el-section" aria-labelledby="titulo-historico">
+  <h2 id="titulo-historico" class="el-heading">Histórico da habilidade</h2>
+  <div class="el-card">{% include "core/_trilha.html" with eventos=eventos %}</div>
+</section>
+{% endif %}
+{% endblock %}

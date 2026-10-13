@@ -1,0 +1,40 @@
+{% load entrelaco %}{# Seção "Situação" do perfil. Recebe `dados` (alunos.secoes.contexto_da_situacao), `aluno`. #}
+<div class="el-card-head">
+  <p class="el-cluster">{% include "alunos/_selo_situacao.html" with situacao=aluno.situacao %}<span>desde {{ aluno.situacao_desde|date:"d/m/Y" }}</span></p>
+  {% if dados.pode_mudar %}<a class="el-btn el-btn-secondary" href="{% url 'alunos:situacao' aluno.pk %}">{% icone "trocar" %}Mudar situação</a>{% endif %}
+</div>
+{% if dados.mudancas %}
+<h3 class="el-label-text">Histórico da situação</h3>
+<ol class="el-list-plain el-alunos-mudancas" role="list">
+  {% for m in dados.mudancas %}
+  <li class="el-alunos-mudanca">
+    <p><strong>{% if m.de == m.para %}Revisão: continua {{ m.get_para_display|lower }}{% else %}{{ m.get_de_display }} → {{ m.get_para_display }}{% endif %}</strong>, a partir de {{ m.data|date:"d/m/Y" }}</p>
+    <p class="el-prose">Motivo: {{ m.motivo }}</p>
+    {% if m.para == "encerrado" %}
+    <p>Motivo de saída: {{ m.motivo_saida|default:"Não informado" }} · Responsável pela saída: {% if m.responsavel %}{{ m.responsavel.nome }}{% else %}Não informado{% endif %}</p>
+    {% endif %}
+    <p class="el-caption">Registrado por {% if m.criado_por %}{{ m.criado_por.nome }}{% else %}pessoa removida{% endif %} em {{ m.criado_em|date:"d/m/Y \à\s H:i" }}</p>
+    {% if m.mostrar_domiciliar %}
+    <div class="el-alunos-domiciliar">
+      <h4 class="el-label-text">Professor domiciliar</h4>
+      {% if m.domiciliar_verificado_em %}
+      <p class="el-prose">{{ m.domiciliar_observacao }}</p>
+      <p class="el-caption">Registrado por {% if m.domiciliar_verificado_por %}{{ m.domiciliar_verificado_por.nome }}{% else %}pessoa removida{% endif %} em {{ m.domiciliar_verificado_em|date:"d/m/Y" }}</p>
+      {% elif m.pode_registrar_domiciliar %}
+      <form class="el-form" method="post" action="{% url 'alunos:domiciliar' m.pk %}" novalidate>
+        {% csrf_token %}
+        <p>Saída por alta{% if dados.ve_sensivel %} do TMO{% endif %}: converse com a família, veja se a criança precisa de professor domiciliar e registre o que foi decidido.</p>
+        {% include "core/_campo.html" with campo=m.form_domiciliar.observacao %}
+        <div class="el-actions"><button type="submit" class="el-btn el-btn-secondary">{% icone "check" %}Registrar decisão</button></div>
+      </form>
+      {% else %}
+      <p>Falta ver se a criança precisa de professor domiciliar.{% if m.responsavel %} A pendência está com {{ m.responsavel.nome_curto }}.{% endif %}</p>
+      {% endif %}
+    </div>
+    {% endif %}
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<p class="el-muted">A situação não mudou desde o cadastro.</p>
+{% endif %}

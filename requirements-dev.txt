@@ -1,0 +1,3 @@
+# Ferramentas de desenvolvimento e do CI (além do requirements.txt).
+# Versão fixa: a mesma regra de estilo em todo computador e no CI.
+ruff==0.16.8

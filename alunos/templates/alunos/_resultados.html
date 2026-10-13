@@ -1,0 +1,45 @@
+{% load entrelaco alunos_extras %}{# Resultados da lista de alunos: a busca enquanto digita troca só este trecho. #}
+{% with total=pagina.paginator.count %}
+<p class="el-muted">{% if total %}{{ total }} aluno{{ total|pluralize:"s" }}{% if filtro != "todos" %} {{ filtro_rotulo|lower }}{% endif %}{% if filtrando %} encontrado{{ total|pluralize:"s" }}{% endif %}{% if pagina.paginator.num_pages > 1 %}, mostrando {{ pagina.start_index }} a {{ pagina.end_index }}{% endif %}.{% endif %}</p>
+{% if linhas %}
+<div class="el-table-wrap">
+  <table class="el-table el-table-stack">
+    <caption class="el-sr-only">Alunos{% if filtro != "todos" %} {{ filtro_rotulo|lower }}{% endif %}{% if q %} encontrados para “{{ q }}”{% endif %}{% if unidade %} em {{ unidade }}{% endif %}</caption>
+    <thead>
+      <tr>
+        <th scope="col">Nome</th>
+        <th scope="col">Idade</th>
+        <th scope="col">Unidade e leito</th>
+        <th scope="col">Situação</th>
+        <th scope="col">Ficha</th>
+        {% if ve_escolar %}<th scope="col">Risco de evasão</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for linha in linhas %}{% with aluno=linha.aluno %}
+      <tr>
+        <th scope="row"><a href="{% url 'alunos:detalhe' aluno.pk %}">{{ aluno.nome_curto }}</a></th>
+        <td data-label="Idade">{{ aluno.idade|idade_por_extenso|default:"Não informada" }}</td>
+        <td data-label="Unidade e leito">{{ aluno.unidade|default:"Não informada" }}{% if aluno.leito %} · leito {{ aluno.leito }}{% endif %}</td>
+        <td data-label="Situação">{% include "alunos/_selo_situacao.html" with situacao=aluno.situacao %}</td>
+        <td data-label="Ficha">{% if linha.ficha_incompleta %}<span class="el-badge el-badge-fita">{% icone "alerta" %}Ficha incompleta</span>{% else %}Completa{% endif %}</td>
+        {% if ve_escolar %}<td data-label="Risco de evasão">{% if aluno.risco_evasao %}<span class="el-badge el-badge-danger">{% icone "risco" %}Risco de evasão</span>{% else %}Não marcado{% endif %}</td>{% endif %}
+      </tr>
+      {% endwith %}{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "core/_paginacao.html" %}
+{% else %}
+<div class="el-empty">
+  {% icone "alunos" "el-icon-lg" %}
+  {% if filtrando %}
+  <p>Nenhum aluno encontrado. Confira a grafia, busque só pelo primeiro nome ou mude os filtros.</p>
+  {% elif filtro != "todos" %}
+  <p>Nenhum aluno {{ filtro_rotulo|lower }} agora. Para ver os outros, escolha Todos em Situação.</p>
+  {% else %}
+  <p>Nenhum aluno cadastrado ainda.</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endwith %}

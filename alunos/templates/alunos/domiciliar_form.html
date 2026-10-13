@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Professor domiciliar · {{ aluno.nome_curto }}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{{ url_volta }}">{% icone "seta-voltar" %}{{ aluno.nome_curto }}</a></p>
+    <h1 class="el-display">Registrar a decisão sobre o professor domiciliar</h1>
+    <p class="el-muted">Saída por alta{% if ve_sensivel %} do TMO{% endif %} em {{ mudanca.data|date:"d/m/Y" }}. Converse com a família, veja se a criança precisa de professor domiciliar e registre o que foi decidido.</p>
+  </div>
+</header>
+<form class="el-form" method="post" action="{% url 'alunos:domiciliar' mudanca.pk %}" novalidate>
+  {% csrf_token %}
+  {% include "core/_erros_do_formulario.html" %}
+  {% include "core/_campo.html" with campo=form.observacao %}
+  <div class="el-actions el-actions-sticky">
+    <button type="submit" class="el-btn el-btn-primary">Registrar decisão</button>
+    <a class="el-btn el-btn-secondary" href="{{ url_volta }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

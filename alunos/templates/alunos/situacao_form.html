@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Mudar situação · {{ aluno.nome_curto }}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'alunos:detalhe' aluno.pk %}">{% icone "seta-voltar" %}{{ aluno.nome_curto }}</a></p>
+    <h1 class="el-display">Mudar situação</h1>
+    <p class="el-muted el-cluster"><span>{{ aluno.nome }} está</span>{% include "alunos/_selo_situacao.html" with situacao=aluno.situacao %}<span>desde {{ aluno.situacao_desde|date:"d/m/Y" }}.</span></p>
+  </div>
+</header>
+
+{% if aviso %}
+<div class="el-alert el-alert-warning" role="alert">{% icone "alerta" %}<div><p>{{ aviso }}</p></div></div>
+{% endif %}
+
+<form class="el-form" method="post" action="{% url 'alunos:situacao' aluno.pk %}" novalidate data-situacao-form>
+  {% csrf_token %}
+  {{ form.situacao_vista }}
+  {% include "core/_erros_do_formulario.html" %}
+  <div class="el-grid">
+    {% include "core/_campo.html" with campo=form.para %}
+    {% include "core/_campo.html" with campo=form.data %}
+    {% include "core/_campo.html" with campo=form.motivo %}
+  </div>
+  <fieldset class="el-fieldset el-alunos-saida" data-so-encerrar>
+    <legend>Saída</legend>
+    <p class="el-hint el-fieldset-help">Para encerrar o aluno, o motivo de saída e o responsável pela saída são obrigatórios.</p>
+    <div class="el-grid">
+      {% include "core/_campo.html" with campo=form.motivo_saida %}
+      {% include "core/_campo.html" with campo=form.responsavel %}
+    </div>
+  </fieldset>
+  <div class="el-actions el-actions-sticky">
+    <button type="submit" class="el-btn el-btn-primary">Salvar situação</button>
+    <a class="el-btn el-btn-secondary" href="{{ url_volta }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,107 @@
+/* Tokens da EntreLaço, gerados do design system (tokens.json).
+   O tema segue o aparelho: claro por padrão, escuro com prefers-color-scheme. */
+
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/atkinson-hyperlegible-next-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("../fonts/atkinson-hyperlegible-next-latin-600-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Next";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("../fonts/atkinson-hyperlegible-next-latin-700-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("../fonts/atkinson-hyperlegible-mono-latin-400-normal.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible Mono";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("../fonts/atkinson-hyperlegible-mono-latin-500-normal.woff2") format("woff2");
+}
+
+:root {
+  color-scheme: light dark;
+  --font-sans: "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --surface: #F6F7F4;
+  --surface-raised: #FFFFFF;
+  --surface-sunken: #ECEFEA;
+  --line: #D5DBD5;
+  --line-strong: #76837E;
+  --ink: #16201D;
+  --ink-muted: #4F5D58;
+  --laco: #0B6B5E;
+  --laco-strong: #08544A;
+  --on-laco: #FFFFFF;
+  --laco-soft: #DDF1EB;
+  --fita: #E3A13B;
+  --on-fita: #1F1607;
+  --fita-soft: #FBEBCF;
+  --fita-ink: #7A4E08;
+  --danger: #B3261E;
+  --danger-soft: #FBE3E1;
+  --success: #0F6A8A;
+  --success-soft: #DDEFF6;
+  --link: var(--laco);
+  --shadow-sm: 0 1px 2px #16201D14, 0 1px 3px #16201D1A;
+  --shadow-lg: 0 4px 8px #16201D14, 0 12px 28px -2px #16201D29;
+  --focus-ring: 0 0 0 2px #FFFFFF, 0 0 0 5px #0B6B5E;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --touch-target: 48px;
+  --content-max: 720px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface: #111614;
+    --surface-raised: #1A201E;
+    --surface-sunken: #0B0F0E;
+    --line: #2F3835;
+    --line-strong: #76847F;
+    --ink: #E9EFEC;
+    --ink-muted: #A7B3AE;
+    --laco: #5CC9B0;
+    --laco-strong: #7FD8C3;
+    --on-laco: #0B1A16;
+    --laco-soft: #12342D;
+    --fita: #E8B055;
+    --on-fita: #1F1607;
+    --fita-soft: #3A2A10;
+    --fita-ink: #F0C277;
+    --danger: #FF8A80;
+    --danger-soft: #3D1412;
+    --success: #6CC4E6;
+    --success-soft: #0F2C38;
+    --shadow-sm: 0 1px 3px #000000B3;
+    --shadow-lg: 0 12px 28px -2px #000000CC;
+    --focus-ring: 0 0 0 2px #111614, 0 0 0 5px #5CC9B0;
+  }
+}

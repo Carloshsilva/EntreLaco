@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Agenda{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <h1 class="el-display">Agenda</h1>
+    <p class="el-muted">Semana de {{ inicio_semana|date:"d/m" }} a {{ fim_semana|date:"d/m/Y" }}{% if pessoa %}, de {{ pessoa.nome }}{% else %}, de toda a equipe{% endif %}</p>
+  </div>
+  <div class="el-pagehead-actions">
+    {% if acesso|pode_editar:"aulas" %}<a class="el-btn el-btn-primary" href="{% url 'aulas:marcar' %}">{% icone "mais" %}Marcar aula</a>{% endif %}
+    {% if acesso|pode_editar:"atas" %}<a class="el-btn el-btn-secondary" href="{% url 'reunioes:nova' %}">{% icone "reuniao" %}Marcar reunião</a>{% endif %}
+  </div>
+</header>
+
+<form class="el-filters" method="get" action="{% url 'agenda' %}">
+  <input type="hidden" name="semana" value="{{ inicio_semana|date:'Y-m-d' }}">
+  <div class="el-field">
+    <label class="el-label" for="filtro-pessoa">Agenda de</label>
+    <select class="el-control" id="filtro-pessoa" name="pessoa">
+      <option value="todos"{% if escolha == "todos" %} selected{% endif %}>Toda a equipe</option>
+      {% for p in pessoas %}<option value="{{ p.pk }}"{% if escolha == p.pk|stringformat:"s" %} selected{% endif %}>{{ p.nome }}{% if p.pk == user.pk %} (você){% endif %}</option>{% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="el-btn el-btn-secondary">Mostrar</button>
+</form>
+
+<nav class="el-pagination" aria-label="Semanas">
+  <a class="el-btn el-btn-secondary" href="?semana={{ semana_anterior }}&amp;pessoa={{ escolha }}">{% icone "voltar" %}Semana anterior</a>
+  {% if not esta_semana %}<a class="el-btn el-btn-quiet" href="?pessoa={{ escolha }}">Esta semana</a>{% endif %}
+  <a class="el-btn el-btn-secondary" href="?semana={{ semana_seguinte }}&amp;pessoa={{ escolha }}">Próxima semana{% icone "avancar" %}</a>
+</nav>
+
+<div class="el-agenda">
+  {% for dia in dias %}
+  <section class="el-agenda-day{% if dia.hoje %} el-agenda-today{% endif %}" aria-labelledby="dia-{{ forloop.counter }}">
+    <h2 id="dia-{{ forloop.counter }}">{{ dia.nome|capfirst }}, {{ dia.data|date:"d/m" }}{% if dia.hoje %} <span class="el-badge el-badge-laco">Hoje</span>{% endif %}</h2>
+    {% if dia.eventos %}
+    <ul class="el-list">{% for e in dia.eventos %}<li>{% include "core/_evento.html" %}</li>{% endfor %}</ul>
+    {% else %}
+    <p class="el-caption">Nada marcado.</p>
+    {% endif %}
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

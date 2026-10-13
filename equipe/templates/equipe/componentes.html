@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Componentes curriculares{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'equipe:configuracao' %}">{% icone "seta-voltar" %}Configuração</a></p>
+    <h1 class="el-display">Componentes curriculares</h1>
+    <p class="el-muted">O que os professores ensinam. Aparece no perfil de professor e no registro de aula.</p>
+  </div>
+  <div class="el-pagehead-actions">
+    <a class="el-btn el-btn-primary" href="{% url 'equipe:componente_novo' %}">{% icone "mais" %}Cadastrar componente</a>
+  </div>
+</header>
+{% if componentes %}
+<div class="el-table-wrap">
+  <table class="el-table el-table-stack">
+    <caption class="el-sr-only">Componentes curriculares do serviço</caption>
+    <thead>
+      <tr>
+        <th scope="col">Componente</th>
+        <th scope="col">Situação</th>
+        <th scope="col">Professores que ensinam</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in componentes %}
+      <tr>
+        <th scope="row"><a href="{% url 'equipe:componente_editar' c.pk %}">{{ c.nome }}</a></th>
+        <td data-label="Situação">{% if c.ativo %}<span class="el-badge el-badge-success">{% icone "ok" %}Ativo</span>{% else %}<span class="el-badge">{% icone "pausa" %}Inativo</span>{% endif %}</td>
+        <td data-label="Professores que ensinam">{{ c.total_professores }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="el-empty">{% icone "aula" "el-icon-lg" %}<p>Nenhum componente curricular ainda. Cadastre o primeiro, por exemplo Matemática.</p></div>
+{% endif %}
+{% endblock %}

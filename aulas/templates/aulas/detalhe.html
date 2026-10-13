@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Aula com {{ aula.aluno.nome_curto }}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+{% url 'alunos:detalhe' aula.aluno_id as url_aluno %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'aulas:lista' %}">{% icone "seta-voltar" %}Aulas</a></p>
+    <h1 class="el-display">Aula com {{ aula.aluno.nome_curto }}</h1>
+    <p class="el-muted">{{ aula.data|date:"l, d/m/Y"|capfirst }}{% if aula.hora_inicio %} às {{ aula.hora_inicio|time:"H:i" }}{% endif %}, com {{ aula.professor.nome_curto }}</p>
+    <p>{% include "aulas/_situacao.html" %}</p>
+  </div>
+  {% if acesso|pode_editar:"aulas" %}
+  <div class="el-pagehead-actions">
+    {% if aula.situacao == "marcada" %}
+    <a class="el-btn el-btn-primary" href="{% url 'aulas:registrar_marcada' aula.pk %}">{% icone "aula" %}Registrar esta aula</a>
+    <a class="el-btn el-btn-secondary" href="{% url 'aulas:nao_realizada' aula.pk %}">{% icone "fechar" %}Não aconteceu</a>
+    <a class="el-btn el-btn-quiet" href="{% url 'aulas:editar' aula.pk %}">{% icone "editar" %}Editar</a>
+    {% elif aula.situacao == "registrada" %}
+    <a class="el-btn el-btn-primary" href="{% url 'aulas:foto_nova' aula.pk %}">{% icone "camera" %}Adicionar fotos</a>
+    <a class="el-btn el-btn-secondary" href="{% url 'aulas:editar' aula.pk %}">{% icone "editar" %}Editar registro</a>
+    {% else %}
+    <a class="el-btn el-btn-secondary" href="{% url 'aulas:editar' aula.pk %}">{% icone "editar" %}Editar</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</header>
+
+<section class="el-card" aria-labelledby="titulo-dados">
+  <h2 id="titulo-dados" class="el-heading">Dados da aula</h2>
+  <dl class="el-dl el-dl-cols">
+    <div><dt>Aluno</dt><dd>{% if url_aluno and acesso|pode_ver:"identificacao" %}<a href="{{ url_aluno }}">{{ aula.aluno.nome_curto }}</a>{% else %}{{ aula.aluno.nome_curto }}{% endif %}</dd></div>
+    <div><dt>Professor(a)</dt><dd>{{ aula.professor.nome }}</dd></div>
+    <div><dt>Data</dt><dd>{{ aula.data|date:"d/m/Y" }}</dd></div>
+    <div><dt>Horário</dt><dd>{% if aula.hora_inicio %}{{ aula.hora_inicio|time:"H:i" }}{% else %}Sem hora marcada{% endif %}</dd></div>
+    <div><dt>Minutos de atendimento</dt><dd>{{ aula.duracao_minutos }} minutos</dd></div>
+    <div>
+      <dt>Aulas pela regra do serviço</dt>
+      <dd>{% if aula.situacao == "registrada" %}{{ equivalentes }} aula{{ equivalentes|pluralize }} {{ texto_da_regra }}{% elif aula.situacao == "marcada" %}Conta quando a aula for registrada{% else %}Não conta: a aula não aconteceu{% endif %}</dd>
+    </div>
+    {% if aula.registrada_em %}
+    <div><dt>Registrada</dt><dd>Em {{ aula.registrada_em|date:"d/m/Y \à\s H:i" }}{% if aula.registrada_por %}, por {{ aula.registrada_por.nome_curto }}{% endif %}</dd></div>
+    {% endif %}
+    {% if aula.situacao == "nao_realizada" %}
+    <div><dt>Por que não aconteceu</dt><dd>{{ aula.motivo_nao_realizada|default:"Sem motivo registrado" }}</dd></div>
+    {% endif %}
+  </dl>
+  {% if aula.falta_registrar %}
+  <p class="el-alert el-alert-warning">{% icone "alerta" %}<span>A data desta aula já passou. Registre o que foi trabalhado ou diga que ela não aconteceu.</span></p>
+  {% endif %}
+</section>
+
+{% if aula.situacao == "registrada" %}
+<section class="el-card" aria-labelledby="titulo-registro">
+  <h2 id="titulo-registro" class="el-heading">O que foi trabalhado</h2>
+  <dl class="el-dl">
+    <div><dt>Componentes trabalhados</dt><dd>{% for c in aula.componentes.all %}{{ c.nome }}{% if not forloop.last %}, {% endif %}{% empty %}Nenhum marcado{% endfor %}</dd></div>
+    <div><dt>O que foi trabalhado</dt><dd class="el-prose">{{ aula.conteudo|default:"Não preenchido" }}</dd></div>
+    <div><dt>Como o aluno participou</dt><dd class="el-prose">{{ aula.participacao|default:"Não preenchido" }}</dd></div>
+    {% with habilidades=aula.habilidades.all %}{% if habilidades %}
+    <div>
+      <dt>Habilidades da BNCC</dt>
+      <dd>
+        <ul class="el-list-plain">
+          {% for h in habilidades %}<li><span class="el-data">{{ h.codigo }}</span> {{ h.descricao }}</li>{% endfor %}
+        </ul>
+      </dd>
+    </div>
+    {% endif %}{% endwith %}
+  </dl>
+</section>
+
+<section class="el-card" id="fotos" aria-labelledby="titulo-fotos">
+  <h2 id="titulo-fotos" class="el-heading">Fotos das atividades</h2>
+  {% if fotos %}
+  <ul class="el-gallery">
+    {% for f in fotos %}
+    <li>
+      <figure>
+        <a href="{% url 'aulas:foto' f.pk %}" hx-boost="false"><img src="{% url 'aulas:foto' f.pk %}" alt="Abrir a foto {{ forloop.counter }} em tamanho grande" loading="lazy" width="320" height="240"></a>
+        <figcaption>{% if f.legenda %}{{ f.legenda }}{% else %}Foto {{ forloop.counter }}{% endif %}</figcaption>
+      </figure>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="el-muted">Nenhuma foto nesta aula.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="el-section" aria-labelledby="titulo-historico">
+  <h2 id="titulo-historico" class="el-heading">Histórico da aula</h2>
+  <div class="el-card">{% include "core/_trilha.html" with eventos=eventos %}</div>
+</section>
+{% endblock %}

@@ -1,0 +1,24 @@
+# O que não entra na imagem: segredos, dados locais, cópias e arquivos de desenvolvimento.
+.git
+.github
+.env
+.env.*
+!.env.example
+*.sqlite3
+*.dump
+*.tar.gz
+privado/
+.privado-testes/
+staticfiles/
+copias/
+**/__pycache__
+**/*.py[cod]
+.venv/
+venv/
+.coverage
+htmlcov/
+.ruff_cache/
+.DS_Store
+node_modules/
+docker-compose*.yml
+Dockerfile

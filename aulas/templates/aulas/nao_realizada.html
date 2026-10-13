@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}A aula não aconteceu{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+{% url 'aulas:detalhe' aula.pk as url_detalhe %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{{ url_detalhe }}">{% icone "seta-voltar" %}Detalhe da aula</a></p>
+    <h1 class="el-display">A aula com {{ aula.aluno.nome_curto }} não aconteceu</h1>
+    <p class="el-muted">Aula marcada com {{ aula.professor.nome_curto }} para {{ aula.data|date:"d/m/Y" }}{% if aula.hora_inicio %} às {{ aula.hora_inicio|time:"H:i" }}{% endif %}. O motivo fica no histórico da aula, e ela sai das pendências.</p>
+  </div>
+</header>
+
+{% include "core/_formulario.html" with botao="Confirmar que não aconteceu" cancelar=url_detalhe %}
+{% endblock %}

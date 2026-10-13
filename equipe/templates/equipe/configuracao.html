@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Configuração do serviço{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <h1 class="el-display">Configuração do serviço</h1>
+    <p class="el-muted">{{ servico.nome }}. Só quem configura o serviço vê esta tela.</p>
+  </div>
+</header>
+
+<section class="el-section" aria-labelledby="titulo-cadastros">
+  <h2 id="titulo-cadastros" class="el-heading">Cadastros do serviço</h2>
+  <ul class="el-list el-atalhos">
+    {% for atalho in atalhos %}
+    <li class="el-card">
+      <a class="el-item-link" href="{{ atalho.url }}">
+        {% icone atalho.icone "el-icon-lg" %}
+        <span class="el-item-main">
+          <span class="el-item-title">{{ atalho.titulo }}</span>
+          <span class="el-item-meta">{{ atalho.texto }}</span>
+        </span>
+        {% icone "avancar" %}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="el-section" aria-labelledby="titulo-parametros">
+  <h2 id="titulo-parametros" class="el-heading">Parâmetros</h2>
+  <p class="el-muted">Cada mudança vale na hora para toda a equipe e fica na trilha de auditoria.</p>
+  {% include "core/_formulario.html" with botao="Salvar configuração" secoes=secoes %}
+</section>
+
+<section class="el-section" aria-labelledby="titulo-historico">
+  <h2 id="titulo-historico" class="el-heading">Histórico da configuração</h2>
+  <div class="el-card">{% include "core/_trilha.html" with eventos=eventos %}</div>
+</section>
+{% endblock %}

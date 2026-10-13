@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}Sem permissão{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead"><div class="el-pagehead-text"><h1 class="el-display">Esta tela não está liberada para você</h1></div></header>
+<div class="el-card">
+  <p>{% if motivo %}{{ motivo }} {% endif %}Se você precisa dela para o seu trabalho, peça para quem configura o serviço revisar o seu papel.</p>
+  <p><a href="{% url 'inicio' %}">Voltar para o início</a></p>
+</div>
+{% endblock %}

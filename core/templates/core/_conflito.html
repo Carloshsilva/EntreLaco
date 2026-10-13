@@ -1,0 +1,22 @@
+{% load entrelaco %}
+<section class="el-conflict" aria-labelledby="titulo-conflito">
+  <h2 id="titulo-conflito">{% icone "alerta" %}Outra pessoa salvou este cadastro enquanto você editava</h2>
+  <p>{% if conflito_autor %}{{ conflito_autor.nome_curto }} salvou{% else %}Alguém salvou{% endif %}{% if conflito_quando %} às {{ conflito_quando|date:"H:i" }}{% endif %}. Nada do que você enviou foi salvo ainda. Nos campos abaixo, as duas pessoas mudaram o mesmo dado: escolha o valor de cada um e salve de novo.</p>
+  <ul class="el-conflict-list">
+    {% for c in conflitos %}
+    <li class="el-conflict-item">
+      <p class="el-label-text">{{ c.rotulo }}</p>
+      <dl class="el-conflict-values">
+        <div class="el-conflict-value"><dt>Valor salvo pela outra pessoa</dt><dd>{{ c.salvo|default:"(vazio)" }}</dd></div>
+        <div class="el-conflict-value"><dt>O que você digitou</dt><dd>{{ c.meu|default:"(vazio)" }}</dd></div>
+      </dl>
+      <div class="el-actions">
+        {% if c.valor_salvo_json != "null" %}<button type="button" class="el-btn el-btn-secondary" data-usar-valor data-campo="{{ c.nome }}" data-valor="{{ c.valor_salvo_json }}" hidden>Usar o valor salvo</button>{% endif %}
+        <a class="el-btn el-btn-quiet" href="#id_{{ c.nome }}">Ir para o campo</a>
+      </div>
+      <p class="el-caption" data-escolha aria-live="polite"></p>
+    </li>
+    {% endfor %}
+  </ul>
+  <p>Para ficar com o que você digitou, é só salvar de novo. Os campos que só a outra pessoa mudou já vieram com o valor dela.</p>
+</section>

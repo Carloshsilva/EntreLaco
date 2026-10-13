@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Cadastrar escola{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'escolas:lista' %}">{% icone "seta-voltar" %}Escolas</a></p>
+    <h1 class="el-display">Cadastrar escola</h1>
+    <p class="el-muted">Só para escola que não aparece na busca. Ela entra na base comum e fica visível para todos os serviços; o contato que você confirmar depois continua só de {{ servico_atual.nome }}.</p>
+  </div>
+</header>
+{% url 'escolas:lista' as url_lista %}
+{% include "core/_formulario.html" with botao="Cadastrar escola" cancelar=proximo|default:url_lista acao=request.get_full_path secoes=secoes colunas=True %}
+{% endblock %}

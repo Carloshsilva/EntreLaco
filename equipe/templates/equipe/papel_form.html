@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{% if papel %}Editar papel{% else %}Criar papel{% endif %}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'equipe:papeis' %}">{% icone "seta-voltar" %}Papéis e permissões</a></p>
+    <h1 class="el-display">{% if papel %}Editar o papel {{ papel.nome }}{% else %}Criar papel{% endif %}</h1>
+    <p class="el-muted">{% if papel %}{% if pessoas_com_o_papel %}{{ pessoas_com_o_papel }} pessoa{{ pessoas_com_o_papel|pluralize }} com acesso {{ pessoas_com_o_papel|pluralize:"tem,têm" }} este papel.{% else %}Ninguém com acesso tem este papel agora.{% endif %} A mudança vale a partir da próxima tela aberta.{% else %}Defina o que quem tem este papel vê e edita, e o que pode fazer.{% endif %}</p>
+  </div>
+</header>
+
+<form class="el-form" method="post" novalidate>
+  {% csrf_token %}
+  {% if estado_original %}<input type="hidden" name="estado_original" value="{{ estado_original }}">{% endif %}
+  {% if conflitos %}{% include "core/_conflito.html" %}{% endif %}
+  {% include "core/_erros_do_formulario.html" %}
+
+  <div class="el-card">
+    {% include "core/_campo.html" with campo=form.nome %}
+    {% include "core/_campo.html" with campo=form.descricao %}
+  </div>
+
+  <section class="el-card" aria-labelledby="titulo-acessos">
+    <h2 id="titulo-acessos" class="el-heading">O que vê e edita</h2>
+    <p class="el-muted">Para cada tipo de dado, escolha se quem tem este papel não vê, vê ou vê e edita. O que o papel não vê some de todas as telas, listas, buscas e da trilha.</p>
+    <div class="el-grade-acessos">
+      {% for campo in form.campos_de_acesso %}
+      <div class="el-grade-acessos-linha">{% include "core/_campo.html" with campo=campo %}</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="el-card" aria-labelledby="titulo-acoes">
+    <h2 id="titulo-acoes" class="el-heading">Ações</h2>
+    {% include "core/_campo.html" with campo=form.acoes %}
+  </section>
+
+  <section class="el-card" aria-labelledby="titulo-configurar">
+    <h2 id="titulo-configurar" class="el-heading">Configurar o serviço</h2>
+    <p>Este papel configura o serviço:
+      {% if papel.pode_configurar %}<span class="el-badge el-badge-laco">{% icone "seguranca" %}Sim</span>{% else %}<span class="el-badge">Não</span>{% endif %}
+    </p>
+    <p class="el-muted">Só o administrador da plataforma libera ou tira a permissão de configurar o serviço. Se este papel precisar dela, peça ao administrador.</p>
+    {% if papel.pode_configurar %}
+    <p class="el-muted">Por configurar o serviço, quem tem este papel também pode, mesmo sem marcar acima: {{ acoes_do_configurar|join:"; "|lower }}.</p>
+    {% endif %}
+  </section>
+
+  {% with motivo=form|campo:"motivo_alteracao" %}{% if motivo %}
+  <div class="el-card">{% include "core/_campo.html" with campo=motivo %}</div>
+  {% endif %}{% endwith %}
+
+  <div class="el-actions el-actions-sticky">
+    <button type="submit" class="el-btn el-btn-primary">{% if papel %}Salvar papel{% else %}Criar papel{% endif %}</button>
+    <a class="el-btn el-btn-secondary" href="{% url 'equipe:papeis' %}">Cancelar</a>
+  </div>
+</form>
+
+{% if papel %}
+<section class="el-section" aria-labelledby="titulo-historico">
+  <h2 id="titulo-historico" class="el-heading">Histórico do papel</h2>
+  <div class="el-card">{% include "core/_trilha.html" with eventos=eventos %}</div>
+</section>
+{% endif %}
+{% endblock %}

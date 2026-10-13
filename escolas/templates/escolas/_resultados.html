@@ -1,0 +1,42 @@
+{% load entrelaco %}{# Resultados da lista de escolas: a busca enquanto digita troca só este trecho. #}
+{% with total=pagina.paginator.count %}
+<p class="el-muted">{% if total %}{{ total|floatformat:"g" }} escola{{ total|pluralize:"s" }}{% if filtrando %} encontrada{{ total|pluralize:"s" }}{% else %} na base{% endif %}{% if pagina.paginator.num_pages > 1 %}, mostrando {{ pagina.start_index }} a {{ pagina.end_index }}{% endif %}.{% endif %}</p>
+{% if pagina.object_list %}
+<div class="el-table-wrap">
+  <table class="el-table el-table-stack">
+    <caption class="el-sr-only">Escolas{% if q %} encontradas para “{{ q }}”{% endif %}</caption>
+    <thead>
+      <tr>
+        <th scope="col">Escola</th>
+        <th scope="col">Município/UF</th>
+        <th scope="col">Código INEP</th>
+        <th scope="col">Rede</th>
+        <th scope="col">Contato do serviço</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for escola in pagina.object_list %}
+      <tr>
+        <th scope="row"><a href="{% url 'escolas:detalhe' escola.pk %}">{{ escola.nome }}</a>{% if escola.funcionamento != "em_atividade" %} <span class="el-badge">{{ escola.get_funcionamento_display }}</span>{% endif %}</th>
+        <td data-label="Município/UF">{{ escola.municipio }}/{{ escola.uf }}</td>
+        <td data-label="Código INEP"><span class="el-data">{{ escola.codigo_inep }}</span></td>
+        <td data-label="Rede">{{ escola.get_rede_display|default:"Não informada" }}</td>
+        <td data-label="Contato do serviço">{% include "escolas/_selo_contato.html" with situacao=escola.situacao_contato %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "core/_paginacao.html" %}
+{% else %}
+<div class="el-empty">
+  {% icone "escola" "el-icon-lg" %}
+  {% if filtrando %}
+  <p>Nenhuma escola encontrada. Confira a grafia, busque só por uma parte do nome ou pelo código INEP, ou tire os filtros.</p>
+  {% else %}
+  <p>A base de escolas está vazia.</p>
+  {% endif %}
+  {% if acesso|pode_editar:"escola_contato" %}<a class="el-btn el-btn-secondary" href="{% url 'escolas:nova' %}">{% icone "mais" %}Cadastrar escola</a>{% endif %}
+</div>
+{% endif %}
+{% endwith %}

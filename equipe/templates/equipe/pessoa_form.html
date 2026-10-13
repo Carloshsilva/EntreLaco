@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    {% if pessoa %}
+    <p class="el-breadcrumb"><a href="{% url 'equipe:pessoa_detalhe' pessoa.pk %}">{% icone "seta-voltar" %}{{ pessoa.nome|default:pessoa.email }}</a></p>
+    {% else %}
+    <p class="el-breadcrumb"><a href="{% url 'equipe:pessoas' %}">{% icone "seta-voltar" %}Equipe</a></p>
+    {% endif %}
+    <h1 class="el-display">{{ titulo }}</h1>
+    {% if pessoa %}
+    <p class="el-muted">E-mail de acesso: {{ pessoa.email }}. O e-mail não muda por aqui.{% if compartilhada %} Como a pessoa também trabalha em outro serviço, aqui só muda o papel dela neste serviço.{% endif %}</p>
+    {% else %}
+    <p class="el-muted">A pessoa recebe um link para criar a própria senha. Cada pessoa tem o seu login: não use conta compartilhada.</p>
+    {% endif %}
+  </div>
+</header>
+{% include "core/_formulario.html" with botao=botao cancelar=cancelar secoes=secoes %}
+{% endblock %}

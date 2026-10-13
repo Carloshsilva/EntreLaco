@@ -1,0 +1,40 @@
+{% load entrelaco %}{# Resultado da busca na equipe. Volta sozinho quando a busca é feita pelo HTMX. #}
+{% if pagina.paginator.count %}
+<p class="el-caption">{{ pagina.paginator.count }} pessoa{{ pagina.paginator.count|pluralize:"s" }}{% if filtrando %} encontrada{{ pagina.paginator.count|pluralize:"s" }}{% endif %}.</p>
+<div class="el-table-wrap">
+  <table class="el-table el-table-stack el-tabela-equipe">
+    <caption class="el-sr-only">Pessoas da equipe</caption>
+    <thead>
+      <tr>
+        <th scope="col">Nome</th>
+        <th scope="col">E-mail</th>
+        <th scope="col">Papel</th>
+        <th scope="col">Situação</th>
+        <th scope="col">Dá aula</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in pagina %}
+      <tr>
+        <th scope="row"><a href="{% url 'equipe:pessoa_detalhe' v.usuario_id %}">{{ v.usuario.nome|default:v.usuario.email }}</a>{% if v.usuario_id == user.pk %} <span class="el-caption">(você)</span>{% endif %}</th>
+        <td data-label="E-mail" class="el-equipe-email">{{ v.usuario.email }}</td>
+        <td data-label="Papel">{{ v.papel.nome }}</td>
+        <td data-label="Situação">{% if v.ativo and v.usuario.is_active %}<span class="el-badge el-badge-success">{% icone "ok" %}Com acesso</span>{% else %}<span class="el-badge">{% icone "pausa" %}Desativada</span>{% endif %}</td>
+        <td data-label="Dá aula">{% if v.e_professor %}Sim, tem perfil de professor{% else %}Não{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "core/_paginacao.html" %}
+{% else %}
+<div class="el-empty">
+  {% icone "equipe" "el-icon-lg" %}
+  {% if filtrando %}
+  <p>Ninguém encontrado com essa busca. Confira o nome ou o e-mail, ou mude a situação para “Todas”.</p>
+  <a class="el-btn el-btn-secondary" href="{% url 'equipe:pessoas' %}">Limpar a busca</a>
+  {% else %}
+  <p>Ninguém na equipe ainda. Cadastre a primeira pessoa.</p>
+  {% endif %}
+</div>
+{% endif %}

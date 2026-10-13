@@ -1,0 +1,15 @@
+/* Estilos próprios do módulo documentos. Use os tokens de tokens.css e o prefixo el-. */
+
+/* Prévia da foto do documento: inteira, sem cortar, e sem passar da altura da tela no celular. */
+.el-documentos-previa { margin: 0; justify-items: center; }
+.el-documentos-previa img {
+  width: auto; max-width: 100%; max-height: min(70vh, 640px); object-fit: contain;
+  background: var(--surface-sunken); border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+.el-documentos-previa figcaption { justify-self: start; }
+
+/* A impressão digital é uma sequência longa sem espaços: quebra em qualquer ponto. */
+.el-documentos-digital { word-break: break-all; }
+
+/* Itens que ocupam a linha inteira nas definições de duas colunas. */
+.el-dl-cols > .el-documentos-inteiro { grid-column: 1 / -1; }

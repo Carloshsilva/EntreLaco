@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{{ termo.titulo }}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'autorizacoes:termos' %}">{% icone "seta-voltar" %}Termos de autorização</a></p>
+    <h1 class="el-display">{{ termo.titulo }}</h1>
+    <p class="el-muted">Termo de {{ termo.get_tipo_display|lower }} · versão {{ termo.versao_do_termo }}</p>
+  </div>
+  <div class="el-pagehead-actions">
+    {% if termo.vigente %}<a class="el-btn el-btn-primary" href="{% url 'autorizacoes:termo_novo' %}?base={{ termo.pk }}">{% icone "mais" %}Criar nova versão</a>{% endif %}
+    {% if not termo.usos %}<a class="el-btn el-btn-secondary" href="{% url 'autorizacoes:termo_editar' termo.pk %}">{% icone "editar" %}Editar termo</a>{% endif %}
+  </div>
+</header>
+
+<section class="el-card" aria-labelledby="titulo-sobre">
+  <div class="el-card-head">
+    <h2 id="titulo-sobre" class="el-heading">Sobre este termo</h2>
+    {% if termo.vigente %}<span class="el-badge el-badge-success">Vigente</span>{% else %}<span class="el-badge">Substituído</span>{% endif %}
+  </div>
+  <dl class="el-dl el-dl-cols">
+    <div><dt>Tipo</dt><dd>{{ termo.get_tipo_display }}</dd></div>
+    <div><dt>Versão</dt><dd>{{ termo.versao_do_termo }}</dd></div>
+    <div><dt>Criado em</dt><dd><time datetime="{{ termo.criado_em|date:'c' }}">{{ termo.criado_em|date:"d/m/Y \à\s H:i" }}</time>{% if termo.criado_por %}, por {{ termo.criado_por.nome_curto }}{% endif %}</dd></div>
+    <div><dt>Usado em</dt><dd>{% if termo.usos %}{{ termo.usos }} autorizaç{{ termo.usos|pluralize:"ão,ões" }}{% else %}Nenhuma autorização ainda{% endif %}</dd></div>
+  </dl>
+  {% if not termo.vigente and vigente_do_tipo %}
+  <p>A versão vigente é a <a href="{% url 'autorizacoes:termo_detalhe' vigente_do_tipo.pk %}">versão {{ vigente_do_tipo.versao_do_termo }}</a>. Esta continua guardada porque as autorizações colhidas com ela apontam para este texto.</p>
+  {% endif %}
+  {% if termo.usos %}
+  <p class="el-muted">Este termo já foi usado e não pode mais mudar: a família viu este texto. Para mudar o texto, crie uma nova versão.</p>
+  {% endif %}
+</section>
+
+<section class="el-card" aria-labelledby="titulo-texto">
+  <h2 id="titulo-texto" class="el-heading">Texto do termo</h2>
+  <div class="el-prose">{{ termo.texto }}</div>
+</section>
+
+<section class="el-card" aria-labelledby="titulo-historico">
+  <h2 id="titulo-historico" class="el-heading">Histórico</h2>
+  {% include "core/_trilha.html" with eventos=eventos %}
+</section>
+{% endblock %}

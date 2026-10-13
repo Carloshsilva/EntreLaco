@@ -1,0 +1,27 @@
+{% load entrelaco %}
+<ul class="el-navlist">
+  {% for item in menu %}
+  <li><a class="el-navlink" href="{{ item.url }}"{% if item.atual %} aria-current="page"{% endif %}>{% icone item.icone %}{{ item.rotulo }}</a></li>
+  {% endfor %}
+</ul>
+<hr class="el-navsep">
+<ul class="el-navlist">
+  {% for outro in outros_servicos %}
+  <li>
+    <form class="el-navform" method="post" action="{% url 'trocar_servico' %}">
+      {% csrf_token %}<input type="hidden" name="servico" value="{{ outro.pk }}">
+      <button class="el-navlink" type="submit">{% icone "trocar" %}Ir para {{ outro.nome }}</button>
+    </form>
+  </li>
+  {% endfor %}
+  <li><a class="el-navlink" href="{% url 'minha_conta' %}">{% icone "chave" %}Minha conta</a></li>
+  {% if user.is_staff %}
+  <li><a class="el-navlink" href="{% url 'admin:index' %}" hx-boost="false">{% icone "servico" %}Painel da plataforma</a></li>
+  {% endif %}
+  <li>
+    <form class="el-navform" method="post" action="{% url 'sair' %}" hx-boost="false">
+      {% csrf_token %}<button class="el-navlink" type="submit">{% icone "sair" %}Sair</button>
+    </form>
+  </li>
+</ul>
+{% if user.is_authenticated %}<p class="el-caption">{{ user.nome }}{% if vinculo_atual %} · {{ vinculo_atual.papel.nome }}{% endif %}</p>{% endif %}

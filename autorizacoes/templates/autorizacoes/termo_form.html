@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{% if edicao %}Editar termo{% elif vigente_do_tipo %}Nova versão do termo{% else %}Novo termo{% endif %}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    {% if edicao %}
+    <p class="el-breadcrumb"><a href="{% url 'autorizacoes:termo_detalhe' termo.pk %}">{% icone "seta-voltar" %}{{ termo.titulo }}</a></p>
+    <h1 class="el-display">Editar termo</h1>
+    <p class="el-muted">{{ termo.get_tipo_display }} · versão {{ termo.versao_do_termo }}</p>
+    {% else %}
+    <p class="el-breadcrumb"><a href="{% url 'autorizacoes:termos' %}">{% icone "seta-voltar" %}Termos de autorização</a></p>
+    <h1 class="el-display">{% if vigente_do_tipo %}Nova versão do termo{% else %}Novo termo{% endif %}</h1>
+    <p class="el-muted">{% if vigente_do_tipo %}{{ vigente_do_tipo.get_tipo_display }}: a versão {{ vigente_do_tipo.versao_do_termo|add:1 }} substitui a versão {{ vigente_do_tipo.versao_do_termo }}.{% else %}O texto que a família vai ler antes de autorizar.{% endif %}</p>
+    {% endif %}
+  </div>
+</header>
+
+{% if edicao %}
+<div class="el-alert el-alert-info">
+  {% icone "info" %}
+  <div><p>Este termo ainda não foi usado em nenhuma autorização, por isso pode ser corrigido. Depois da primeira coleta, o texto só muda com uma nova versão.</p></div>
+</div>
+{% else %}
+<div class="el-alert el-alert-info">
+  {% icone "info" %}
+  <div>
+    <p>O termo salvo passa a valer na hora{% if vigente_do_tipo %}, e a versão {{ vigente_do_tipo.versao_do_termo }} deixa de valer{% else %}; se já houver um termo vigente do mesmo tipo, ele deixa de valer{% endif %}. As versões anteriores ficam guardadas, e cada autorização continua apontando para a versão que a família viu.</p>
+    <p>O texto definitivo é do advogado (LGPD-02). Enquanto ele não chega, deixe claro no próprio texto que ele é provisório.</p>
+  </div>
+</div>
+{% endif %}
+
+{% if edicao %}{% url 'autorizacoes:termo_detalhe' termo.pk as voltar %}{% else %}{% url 'autorizacoes:termos' as voltar %}{% endif %}
+{% include "core/_formulario.html" with botao="Salvar termo" cancelar=voltar %}
+{% endblock %}

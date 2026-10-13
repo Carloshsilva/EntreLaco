@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block titulo %}Trocar senha{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead"><div class="el-pagehead-text"><p class="el-breadcrumb"><a href="{% url 'minha_conta' %}">Minha conta</a></p><h1 class="el-display">Trocar senha</h1></div></header>
+{% url 'minha_conta' as cancelar %}
+{% include "core/_formulario.html" with botao="Trocar senha" cancelar=cancelar %}
+{% endblock %}

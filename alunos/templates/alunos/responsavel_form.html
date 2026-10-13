@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{% if object %}Editar responsável{% else %}Adicionar responsável{% endif %} · {{ aluno.nome_curto }}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'alunos:detalhe' aluno.pk %}">{% icone "seta-voltar" %}{{ aluno.nome_curto }}</a></p>
+    <h1 class="el-display">{% if object %}Editar responsável{% else %}Adicionar responsável{% endif %}</h1>
+    <p class="el-muted">Responsável por {{ aluno.nome }}.</p>
+  </div>
+</header>
+{% url 'alunos:detalhe' aluno.pk as url_aluno %}
+{% include "core/_formulario.html" with botao="Salvar responsável" cancelar=url_aluno colunas=True %}
+{% endblock %}

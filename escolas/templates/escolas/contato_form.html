@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{% if object %}Editar contato{% else %}Cadastrar contato{% endif %} · {{ escola.nome }}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'escolas:detalhe' escola.pk %}">{% icone "seta-voltar" %}{{ escola.nome }}</a></p>
+    <h1 class="el-display">{% if object %}Editar contato{% else %}Cadastrar contato{% endif %}</h1>
+    <p class="el-muted">{{ escola.nome }}, {{ escola.municipio }}/{{ escola.uf }}.{% if escola.telefone %} Telefone público: {{ escola.telefone }}.{% endif %} Só {{ servico_atual.nome }} vê este contato.</p>
+  </div>
+</header>
+{% url 'escolas:detalhe' escola.pk as url_escola %}
+{% include "core/_formulario.html" with botao="Salvar contato" cancelar=url_escola %}
+{% endblock %}

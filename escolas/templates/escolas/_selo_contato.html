@@ -1,0 +1,2 @@
+{% load entrelaco %}{# Situação do contato do serviço, sempre com palavra. Recebe `situacao`: "atualizado", "precisa_atualizar" ou vazio. #}
+{% if situacao == "atualizado" %}<span class="el-badge el-badge-success">{% icone "ok" %}Atualizado</span>{% elif situacao == "precisa_atualizar" %}<span class="el-badge el-badge-fita">{% icone "alerta" %}Precisa atualizar</span>{% else %}<span class="el-badge">Sem contato</span>{% endif %}

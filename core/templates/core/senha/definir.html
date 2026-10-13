@@ -1,0 +1,19 @@
+{% extends "base_simples.html" %}
+{% block titulo %}Criar senha{% endblock %}
+{% block conteudo %}
+<p class="el-auth-brand">EntreLaço</p>
+<div class="el-card el-auth-card">
+  <h1 class="el-title">Criar senha</h1>
+  {% if validlink %}
+  <form class="el-form" method="post" novalidate>
+    {% csrf_token %}
+    {% include "core/_erros_do_formulario.html" %}
+    {% include "core/_campo.html" with campo=form.new_password1 %}
+    {% include "core/_campo.html" with campo=form.new_password2 %}
+    <button type="submit" class="el-btn el-btn-primary el-btn-block">Salvar senha</button>
+  </form>
+  {% else %}
+  <p>Este link já foi usado ou venceu. Peça um novo em <a href="{% url 'senha_esqueci' %}">Esqueci a senha</a> ou para quem cuida da equipe no seu serviço.</p>
+  {% endif %}
+</div>
+{% endblock %}

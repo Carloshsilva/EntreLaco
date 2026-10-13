@@ -1,0 +1,32 @@
+{% load entrelaco %}{# Tabela de reuniões. Recebe `reunioes` (com `alunos_citados`), `legenda` e, opcional, `aluno_citar`. #}
+<div class="el-table-wrap">
+  <table class="el-table el-table-stack">
+    <caption class="el-sr-only">{{ legenda }}</caption>
+    <thead>
+      <tr>
+        <th scope="col">Reunião</th>
+        <th scope="col">Data</th>
+        <th scope="col">Hora</th>
+        <th scope="col">Tipo</th>
+        <th scope="col">Situação</th>
+        <th scope="col">Alunos citados</th>
+        {% if aluno_citar %}<th scope="col">Citar {{ aluno_citar.nome_curto }}</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for reuniao in reunioes %}
+      <tr>
+        <th scope="row"><a href="{% url 'reunioes:detalhe' reuniao.pk %}">{{ reuniao.titulo }}</a></th>
+        <td data-label="Data"><time datetime="{{ reuniao.data|date:'Y-m-d' }}">{{ reuniao.data|date:"d/m/Y" }}</time></td>
+        <td data-label="Hora">{% if reuniao.hora_inicio %}{{ reuniao.hora_inicio|time:"H:i" }}{% else %}Sem hora{% endif %}</td>
+        <td data-label="Tipo">{{ reuniao.get_tipo_display }}</td>
+        <td data-label="Situação">{% include "reunioes/_situacao.html" %}</td>
+        <td data-label="Alunos citados">{{ reuniao.alunos_citados }}</td>
+        {% if aluno_citar %}
+        <td data-label="Citar {{ aluno_citar.nome_curto }}"><a class="el-btn el-btn-secondary" href="{% url 'reunioes:citacao_nova' reuniao.pk %}?aluno={{ aluno_citar.pk }}">{% icone "mais" %}Citar aqui<span class="el-sr-only">: {{ aluno_citar.nome_curto }} em {{ reuniao.titulo }}, {{ reuniao.data|date:"d/m" }}</span></a></td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

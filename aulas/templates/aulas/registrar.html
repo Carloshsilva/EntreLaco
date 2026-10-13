@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{{ voltar_url }}">{% icone "seta-voltar" %}{{ voltar_rotulo }}</a></p>
+    <h1 class="el-display">{{ titulo }}</h1>
+    <p class="el-muted">{{ apoio }}</p>
+  </div>
+  {% if aula_marcada %}
+  <div class="el-pagehead-actions">
+    <a class="el-btn el-btn-secondary" href="{% url 'aulas:nao_realizada' aula_marcada.pk %}">{% icone "fechar" %}A aula não aconteceu</a>
+  </div>
+  {% endif %}
+</header>
+
+{% if fica_em_seu_nome %}
+<div class="el-alert el-alert-info">
+  {% icone "info" %}
+  <div><p>Esta aula estava marcada para {{ aula_marcada.professor.nome_curto }} e, ao registrar, fica em seu nome, porque é você quem está registrando o atendimento.</p></div>
+</div>
+{% endif %}
+{% if fotos_perdidas %}
+<div class="el-alert el-alert-warning">
+  {% icone "alerta" %}
+  <div><p>Se você tinha escolhido fotos, escolha de novo antes de salvar: o navegador não guarda as fotos quando a tela volta com algo a corrigir.</p></div>
+</div>
+{% endif %}
+
+{% include "core/_formulario.html" with botao=botao cancelar=voltar_url secoes=secoes %}
+{% endblock %}

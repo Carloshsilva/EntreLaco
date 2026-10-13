@@ -1,0 +1,1 @@
+{% load autorizacoes_extras %}{# Selo da situação de uma autorização: sempre com a palavra. Recebe `autorizacao` (ou None). #}{% if autorizacao %}<span class="el-badge {{ autorizacao.situacao|classe_do_selo }}">{{ autorizacao.get_situacao_display }}</span>{% else %}<span class="el-badge">Ainda não colhida</span>{% endif %}

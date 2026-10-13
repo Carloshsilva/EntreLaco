@@ -1,0 +1,25 @@
+{% load entrelaco %}{# Ordem de atendimento: o filtro de unidade troca só este trecho. #}
+{% with total=pagina.paginator.count %}
+<p class="el-muted">{% if total %}{{ total }} aluno{{ total|pluralize:"s" }} ativo{{ total|pluralize:"s" }}{% if unidade %} em {{ unidade }}{% endif %}{% if pagina.paginator.num_pages > 1 %}, mostrando {{ pagina.start_index }} a {{ pagina.end_index }}{% endif %}.{% endif %}</p>
+{% if linhas %}
+<ol class="el-list el-alunos-fila" role="list">
+  {% for linha in linhas %}{% with aluno=linha.aluno %}
+  <li class="el-alunos-fila-item">
+    <span class="el-alunos-fila-posicao">{{ linha.posicao }}º</span>
+    <div class="el-alunos-fila-texto">
+      <a class="el-alunos-fila-nome" href="{% url 'alunos:detalhe' aluno.pk %}">{{ aluno.nome_curto }}</a>
+      <p>{{ linha.motivos }}</p>
+      <p class="el-caption">{{ aluno.unidade|default:"Unidade não informada" }}{% if aluno.leito %} · leito {{ aluno.leito }}{% endif %}</p>
+    </div>
+    {% if url_registrar %}<a class="el-btn el-btn-secondary el-alunos-fila-acao" href="{{ url_registrar }}?aluno={{ aluno.pk }}">{% icone "aula" %}Registrar aula<span class="el-sr-only"> de {{ aluno.nome_curto }}</span></a>{% endif %}
+  </li>
+  {% endwith %}{% endfor %}
+</ol>
+{% include "core/_paginacao.html" %}
+{% else %}
+<div class="el-empty">
+  {% icone "fila" "el-icon-lg" %}
+  <p>{% if unidade %}Nenhum aluno ativo em {{ unidade }}. Escolha outra unidade ou todas.{% else %}Nenhum aluno ativo agora.{% endif %}</p>
+</div>
+{% endif %}
+{% endwith %}

@@ -1,0 +1,11 @@
+{% load entrelaco %}{# Um evento da agenda. Recebe `e` (core.registro.EventoDaAgenda). #}
+<article class="el-event{% if e.tipo == 'reuniao' %} el-event-reuniao{% endif %}{% if e.cancelado %} el-event-cancelada{% endif %}">
+  <p class="el-event-time">{% if e.hora %}{{ e.hora|time:"H:i" }}{% else %}Sem hora{% endif %}</p>
+  <div class="el-event-body">
+    <a class="el-event-title" href="{{ e.url }}">{{ e.titulo }}</a>
+    <p class="el-caption">
+      {% if e.tipo == "reuniao" %}Reunião{% else %}Aula{% endif %}{% if e.duracao_minutos %} · {{ e.duracao_minutos }} min{% endif %}{% if e.situacao %} · {{ e.situacao }}{% endif %}{% if e.pessoas %} · {{ e.pessoas|join:", " }}{% endif %}
+    </p>
+    {% if e.detalhe %}<p class="el-caption">{{ e.detalhe }}</p>{% endif %}
+  </div>
+</article>

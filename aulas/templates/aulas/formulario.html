@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load entrelaco %}{# Marcar aula e editar aula. Em edição, o _formulario.html do núcleo traz o motivo e o quadro de conflito. #}
+{% block titulo %}{{ titulo }}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{{ voltar_url }}">{% icone "seta-voltar" %}{{ voltar_rotulo }}</a></p>
+    <h1 class="el-display">{{ titulo }}</h1>
+    <p class="el-muted">{{ apoio }}</p>
+  </div>
+</header>
+
+{% include "core/_formulario.html" with botao=botao cancelar=voltar_url secoes=secoes colunas=colunas %}
+{% endblock %}

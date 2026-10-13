@@ -1,0 +1,2 @@
+{# Situação da reunião, sempre com palavra. Recebe `reuniao`. #}
+{% if reuniao.situacao == "realizada" %}<span class="el-badge el-badge-success">{{ reuniao.get_situacao_display }}</span>{% elif reuniao.situacao == "cancelada" %}<span class="el-badge el-badge-danger">{{ reuniao.get_situacao_display }}</span>{% else %}<span class="el-badge el-badge-laco">{{ reuniao.get_situacao_display }}</span>{% endif %}

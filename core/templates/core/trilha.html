@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Trilha de auditoria{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <h1 class="el-display">Trilha de auditoria</h1>
+    <p class="el-muted">Quem criou, alterou, validou ou abriu cada informação, e por quê. Nada aqui pode ser editado nem apagado.</p>
+  </div>
+</header>
+<form class="el-filters" method="get">
+  <div class="el-field">
+    <label class="el-label" for="filtro-pessoa">Pessoa</label>
+    <select class="el-control" id="filtro-pessoa" name="pessoa">
+      <option value="">Todas</option>
+      {% for p in pessoas %}<option value="{{ p.pk }}"{% if pessoa == p.pk|stringformat:"s" %} selected{% endif %}>{{ p.nome }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="el-field">
+    <label class="el-label" for="filtro-acao">O que foi feito</label>
+    <select class="el-control" id="filtro-acao" name="acao">
+      <option value="">Tudo</option>
+      {% for valor, rotulo in acoes %}<option value="{{ valor }}"{% if acao == valor %} selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="el-btn el-btn-secondary">Filtrar</button>
+</form>
+<div class="el-card">
+  {% include "core/_trilha.html" with eventos=pagina.object_list mostrar_objeto=True %}
+</div>
+{% include "core/_paginacao.html" %}
+{% endblock %}

@@ -1,0 +1,94 @@
+# EntreLaço na VPS: banco (PostgreSQL), aplicação (Django + Gunicorn) e Caddy (HTTPS).
+# Os valores vêm do arquivo .env (copie de .env.example). Passo a passo no README.
+#
+# Onde ficam os dados:
+#   - banco:   volume "banco" (dados do PostgreSQL);
+#   - privado: volume "privado" (fotos, documentos e assinaturas, ENTRELACO_PASTA_PRIVADA);
+#   - cópias de segurança: pasta do servidor PASTA_COPIAS (padrão /var/backups/entrelaco), fora do Docker,
+#     gravada por deploy/backup.sh. Fica fora de propósito: um "docker compose down -v" apaga os volumes,
+#     mas não apaga as cópias.
+#   - certificados do HTTPS: volumes "caddy_dados" e "caddy_config".
+name: entrelaco
+
+x-registros: &registros
+  # Registros (docker compose logs) com tamanho limitado, para não encher o disco.
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-entrelaco}
+      POSTGRES_USER: ${POSTGRES_USER:-entrelaco}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
+    volumes:
+      - banco:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: *registros
+
+  web:
+    build: .
+    image: entrelaco-web
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: true
+    environment:
+      # Montado aqui a partir das variáveis POSTGRES_* do .env: a senha fica num lugar só.
+      # Gere a senha só com letras e números (openssl rand -hex 24), para caber no endereço.
+      DATABASE_URL: postgres://${POSTGRES_USER:-entrelaco}:${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}@db:5432/${POSTGRES_DB:-entrelaco}
+      ENTRELACO_PASTA_PRIVADA: /dados/privado
+    volumes:
+      - privado:/dados/privado
+    depends_on:
+      db:
+        condition: service_healthy
+    # A porta 8000 fica só na rede interna: quem fala com a internet é o Caddy.
+    expose:
+      - "8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - >-
+          import os, urllib.request;
+          host = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost").split(",")[0].strip();
+          pedido = urllib.request.Request("http://127.0.0.1:8000/entrar/", headers={"Host": host, "X-Forwarded-Proto": "https"});
+          urllib.request.urlopen(pedido, timeout=5)
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging: *registros
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      DOMINIO: ${DOMINIO:?Defina DOMINIO no arquivo .env}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_dados:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+    logging: *registros
+
+volumes:
+  banco:
+  privado:
+  caddy_dados:
+  caddy_config:

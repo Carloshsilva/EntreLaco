@@ -1,0 +1,11 @@
+{% load entrelaco %}
+{% if messages %}
+<div class="el-messages" role="status">
+  {% for mensagem in messages %}
+  <div class="el-alert el-alert-{{ mensagem.level_tag|default:'info' }}">
+    {% if mensagem.level_tag == "success" %}{% icone "ok" %}{% elif mensagem.level_tag == "warning" %}{% icone "alerta" %}{% elif mensagem.level_tag == "error" %}{% icone "erro" %}{% else %}{% icone "info" %}{% endif %}
+    <div><p>{{ mensagem }}</p></div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

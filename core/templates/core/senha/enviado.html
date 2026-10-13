@@ -1,0 +1,10 @@
+{% extends "base_simples.html" %}
+{% block titulo %}Link enviado{% endblock %}
+{% block conteudo %}
+<p class="el-auth-brand">EntreLaço</p>
+<div class="el-card el-auth-card">
+  <h1 class="el-title">Confira seu e-mail</h1>
+  <p>Se o e-mail estiver cadastrado, o link para criar a senha nova chega em alguns minutos. Ele vale por 24 horas. Olhe também a caixa de spam.</p>
+  <p><a href="{% url 'entrar' %}">Voltar para entrar</a></p>
+</div>
+{% endblock %}
