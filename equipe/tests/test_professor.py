@@ -1,4 +1,7 @@
 """Perfil de professor (RF-09)."""
+from unittest import mock
+
+from django.db import IntegrityError
 from django.urls import reverse
 
 from core.models import EventoAuditoria
@@ -86,6 +89,16 @@ class PerfilDeProfessorTestes(EquipeTestCase):
         url = reverse("equipe:professor", args=[self.de_fora.pk])
         self.assertEqual(self.client.get(url).status_code, 404)
         self.assertEqual(self.client.post(url, {"componentes": [self.matematica.pk]}).status_code, 404)
+        self.assertFalse(PerfilProfessor.objects.exists())
+
+    def test_perfil_criado_por_outra_pessoa_ao_mesmo_tempo(self):
+        self.entrar(self.coordenacao)
+        url = reverse("equipe:professor", args=[self.professor.pk])
+        # A outra pessoa grava o perfil entre a conferência e a gravação desta: o banco recusa o segundo.
+        with mock.patch("core.views_base.CriarComAuditoriaMixin.form_valid", side_effect=IntegrityError):
+            resposta = self.client.post(url, {"componentes": [self.matematica.pk]}, follow=True)
+        self.assertRedirects(resposta, url)
+        self.assertContains(resposta, "Outra pessoa acabou de criar este perfil")
         self.assertFalse(PerfilProfessor.objects.exists())
 
     def test_sem_login_vai_para_entrar(self):

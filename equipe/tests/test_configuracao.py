@@ -1,4 +1,6 @@
 """Quem configura o serviço: papéis e permissões, parâmetros do serviço e componentes curriculares."""
+from django.db.models import ProtectedError
+from django.test import override_settings
 from django.urls import reverse
 
 from core.models import EventoAuditoria, Papel, Servico
@@ -135,6 +137,13 @@ class PapeisTestes(EquipeTestCase):
         resposta = self.client.post(reverse("equipe:papel_novo"), dados)
         self.assertContains(resposta, "Falta escolher o acesso a “Saúde e dados sensíveis”")
 
+    def test_papel_com_pessoas_nao_pode_ser_apagado(self):
+        with self.assertRaises(ProtectedError):
+            self.papel_professor.delete()
+        self.assertTrue(Papel.objects.filter(pk=self.papel_professor.pk).exists())
+        self.entrar(self.supervisao)
+        self.assertNotContains(self.client.get(reverse("equipe:papel_editar", args=[self.papel_professor.pk])), "Apagar")
+
     def test_papel_de_outro_servico_da_404(self):
         self.entrar(self.supervisao)
         papel_de_fora = self.de_fora.vinculos.get().papel
@@ -178,6 +187,15 @@ class ConfiguracaoDoServicoTestes(EquipeTestCase):
         self.assertContains(resposta, reverse("equipe:papeis"))
         self.assertContains(resposta, reverse("equipe:componentes"))
         self.assertContains(resposta, "Minutos de atendimento que contam 1 aula")
+
+    @override_settings(ROOT_URLCONF="equipe.tests.urls_atalhos")
+    def test_atalhos_para_termos_e_lista_da_bncc(self):
+        self.entrar(self.supervisao)
+        resposta = self.client.get(reverse("equipe:configuracao"))
+        self.assertContains(resposta, f'href="{reverse("autorizacoes:termos")}"')
+        self.assertContains(resposta, f'href="{reverse("aulas:habilidades")}"')
+        self.assertContains(resposta, "Termos de autorização")
+        self.assertContains(resposta, "Lista da BNCC")
 
     def test_salvar_grava_e_registra_antes_e_depois(self):
         self.entrar(self.supervisao)

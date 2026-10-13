@@ -17,7 +17,7 @@ from django.contrib.sessions.models import Session
 from django.core.exceptions import PermissionDenied
 from django.core.mail import send_mail
 from django.core.paginator import Paginator
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Exists, OuterRef, Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
@@ -69,21 +69,38 @@ def tem_outro_servico(usuario, servico):
     return Vinculo.objects.filter(usuario=usuario).exclude(servico=servico).exists()
 
 
-def link_permitido(request, vinculo, outro_servico=None):
-    """O link de senha só é gerado para quem é só deste serviço.
-
-    Quem gera o link o vê na tela. Se a pessoa também trabalhasse em outro serviço, o link
-    daria a quem cuida desta equipe a conta dela no outro serviço (SEG-05). Nesse caso, ela
-    mesma pede um link em "Esqueci a senha", na tela de entrar.
-    """
+def pode_mandar_link(request, vinculo):
+    """Quem cuida da equipe manda um link de senha para outra pessoa do serviço com acesso ativo."""
     usuario = vinculo.usuario
     return (
         pode_gerir(request, vinculo)
         and usuario.pk != request.user.pk
-        and not usuario.is_superuser
-        and not usuario.is_staff
-        and not (tem_outro_servico(usuario, request.servico) if outro_servico is None else outro_servico)
+        and vinculo.ativo
+        and usuario.is_active
     )
+
+
+def link_na_tela(usuario, outro_servico):
+    """Se o link de senha pode aparecer na tela de quem cuida da equipe.
+
+    Quem vê o link consegue criar a senha no lugar da pessoa e entrar como ela. Por isso o link
+    só aparece na tela, para ser mandado pelo WhatsApp de trabalho, quando a pessoa ainda não
+    criou a senha e é só deste serviço. Para quem já tem senha (RF-05: cada ação aponta uma
+    pessoa), para quem também trabalha em outro serviço (SEG-05) e para quem acessa o painel
+    da plataforma, o link vai só para o e-mail da própria pessoa.
+    """
+    return not (
+        usuario.has_usable_password() or outro_servico or usuario.is_staff or usuario.is_superuser
+    )
+
+
+def por_que_so_por_email(usuario, outro_servico):
+    """Frase para a tela da pessoa quando o link vai só para o e-mail dela."""
+    if usuario.has_usable_password():
+        return "Ela já criou a senha, então o link vai só para o e-mail dela."
+    if outro_servico:
+        return "Ela também trabalha em outro serviço, então o link vai só para o e-mail dela."
+    return "O link vai só para o e-mail dela."
 
 
 def gerar_link_de_senha(request, usuario):
@@ -97,7 +114,7 @@ def horas_de_validade():
 
 
 def mandar_link_por_email(request, usuario, link, novo):
-    """Tenta mandar o link por e-mail. Se não der, quem cadastrou manda pelo WhatsApp de trabalho."""
+    """Tenta mandar o link por e-mail e diz se deu certo (nada é enviado por WhatsApp nesta versão, RF-48)."""
     contexto = {
         "pessoa": usuario,
         "quem": request.user,
@@ -116,13 +133,21 @@ def mandar_link_por_email(request, usuario, link, novo):
     return True
 
 
-def entregar_link(request, usuario, novo):
-    """Gera o link, tenta o e-mail, guarda o link para a tela mostrar uma vez e registra na trilha."""
+def entregar_link(request, usuario, novo, na_tela):
+    """Gera o link, tenta o e-mail e registra na trilha.
+
+    Com `na_tela`, também guarda o link na sessão para a tela da pessoa mostrar uma única vez.
+    """
     link = gerar_link_de_senha(request, usuario)
     enviado = mandar_link_por_email(request, usuario, link, novo)
-    request.session[CHAVE_DO_LINK] = {"usuario": usuario.pk, "link": link, "email_enviado": enviado}
-    descricao = "Gerou um novo link para criar a senha" if novo else "Gerou o link para criar a senha"
-    descricao += " e mandou por e-mail" if enviado else "; o e-mail não foi enviado"
+    if na_tela:
+        request.session[CHAVE_DO_LINK] = {"usuario": usuario.pk, "link": link, "email_enviado": enviado}
+        descricao = "Gerou um novo link para criar a senha" if novo else "Gerou o link para criar a senha"
+        descricao += " e mandou por e-mail" if enviado else "; o e-mail não foi enviado"
+    elif enviado:
+        descricao = "Mandou por e-mail um link para criar a senha"
+    else:
+        descricao = "Tentou mandar por e-mail um link para criar a senha; o e-mail não foi enviado"
     auditoria.registrar(request, Acao.OUTRO, usuario, servico=request.servico, descricao=descricao)
     return enviado
 
@@ -163,6 +188,7 @@ class PessoaDoServicoMixin:
 
     exige_gerir_pessoa = False
     proibe_a_si_mesmo = False
+    motivo_a_si_mesmo = "Você não muda o próprio acesso. Peça a outra pessoa que cuida da equipe."
 
     @cached_property
     def vinculo(self):
@@ -175,7 +201,7 @@ class PessoaDoServicoMixin:
         if self.exige_gerir_pessoa and not pode_gerir(request, self.vinculo):
             raise PermissionDenied("Só quem configura o serviço mexe no cadastro desta pessoa.")
         if self.proibe_a_si_mesmo and self.vinculo.usuario_id == request.user.pk:
-            raise PermissionDenied("Você não muda o próprio acesso. Peça a outra pessoa que cuida da equipe.")
+            raise PermissionDenied(self.motivo_a_si_mesmo)
         return super().dispatch(request, *args, **kwargs)
 
     def url_da_pessoa(self):
@@ -259,7 +285,7 @@ class PessoaNovaView(AcessoMixin, FormView):
             "cancelar": reverse("equipe:pessoas"),
             "secoes": [
                 {"titulo": "Dados da pessoa", "campos": ["email", "nome", "whatsapp_trabalho"]},
-                {"titulo": "Papel no serviço", "campos": ["papel"]},
+                {"titulo": "O que faz no serviço", "campos": ["papel"]},
             ],
         })
         return contexto
@@ -296,14 +322,29 @@ class PessoaNovaView(AcessoMixin, FormView):
                 mudancas=auditoria.comparar(Vinculo, {}, auditoria.fotografar(vinculo, ["papel"])),
             )
         if nova:
-            entregar_link(self.request, usuario, novo=False)
+            entregar_link(self.request, usuario, novo=False, na_tela=True)
             messages.success(self.request, "Pessoa cadastrada. Mande para ela o link para criar a senha.")
-        else:
+        elif usuario.has_usable_password():
             messages.success(
                 self.request,
                 f"{usuario.nome} já tinha cadastro na EntreLaço e agora também faz parte desta equipe. "
                 "Ela entra com o e-mail e a senha que já usa; o nome e o WhatsApp continuam os do cadastro dela.",
             )
+        else:
+            # Já tinha cadastro, mas ainda não criou a senha: o link vai só para o e-mail dela (SEG-05).
+            enviado = entregar_link(self.request, usuario, novo=False, na_tela=False)
+            texto = (
+                f"{usuario.nome} já tinha cadastro na EntreLaço e agora também faz parte desta equipe. "
+                "Ela ainda não criou a senha"
+            )
+            if enviado:
+                messages.success(self.request, f"{texto}: o link para criar a senha foi mandado para {usuario.email}.")
+            else:
+                messages.warning(
+                    self.request,
+                    f"{texto}, e não deu para mandar o link por e-mail agora. "
+                    "Use “Mandar link de senha por e-mail” daqui a pouco.",
+                )
         return redirect("equipe:pessoa_detalhe", pk=usuario.pk)
 
 
@@ -330,6 +371,7 @@ class PessoaDetalheView(AcessoMixin, PessoaDoServicoMixin, TemplateView):
         ativa = vinculo.ativo and pessoa.is_active
         a_si_mesmo = pessoa.pk == self.request.user.pk
         outro_servico = tem_outro_servico(pessoa, self.request.servico)
+        na_tela = link_na_tela(pessoa, outro_servico)
         contexto.update({
             "vinculo": vinculo,
             "pessoa": pessoa,
@@ -343,7 +385,9 @@ class PessoaDetalheView(AcessoMixin, PessoaDoServicoMixin, TemplateView):
             "pode_editar": gerir,
             "pode_desativar": gerir and vinculo.ativo and not a_si_mesmo,
             "pode_reativar": gerir and not ativa and not a_si_mesmo,
-            "pode_gerar_link": ativa and link_permitido(self.request, vinculo, outro_servico),
+            "pode_gerar_link": pode_mandar_link(self.request, vinculo),
+            "link_na_tela": na_tela,
+            "so_por_email": "" if na_tela else por_que_so_por_email(pessoa, outro_servico),
             "tem_outro_servico": outro_servico,
             "senha_criada": pessoa.has_usable_password(),
         })
@@ -361,11 +405,17 @@ class PessoaEditarView(AcessoMixin, PessoaDoServicoMixin, EdicaoSemVersaoMixin, 
     template_name = "equipe/pessoa_form.html"
     mensagem_sucesso = "Alterações salvas."
 
+    @cached_property
+    def compartilhada(self):
+        """A pessoa também trabalha em outro serviço: nome e WhatsApp valem lá também (SEG-05)."""
+        return tem_outro_servico(self.vinculo.usuario, self.request.servico)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs.update(
             servico=self.request.servico, acesso=self.request.acesso,
             a_si_mesmo=self.vinculo.usuario_id == self.request.user.pk,
+            compartilhada=self.compartilhada,
         )
         return kwargs
 
@@ -376,12 +426,13 @@ class PessoaEditarView(AcessoMixin, PessoaDoServicoMixin, EdicaoSemVersaoMixin, 
         contexto = super().get_context_data(**kwargs)
         contexto.update({
             "pessoa": self.vinculo.usuario,
+            "compartilhada": self.compartilhada,
             "titulo": f"Editar dados de {self.vinculo.usuario.nome}",
             "botao": "Salvar alterações",
             "cancelar": self.url_da_pessoa(),
             "secoes": [
                 {"titulo": "Dados da pessoa", "campos": ["nome", "whatsapp_trabalho"]},
-                {"titulo": "Papel no serviço", "campos": ["papel"]},
+                {"titulo": "O que faz no serviço", "campos": ["papel"]},
             ],
         })
         return contexto
@@ -413,7 +464,7 @@ class PessoaEditarView(AcessoMixin, PessoaDoServicoMixin, EdicaoSemVersaoMixin, 
         motivo = form.cleaned_data["motivo_alteracao"]
         usuario = vinculo.usuario
         dados_da_pessoa = {nome: m for nome, m in mudancas.items() if nome != "papel"}
-        if dados_da_pessoa:
+        if dados_da_pessoa and not self.compartilhada:
             usuario.nome = form.cleaned_data["nome"]
             usuario.whatsapp_trabalho = form.cleaned_data["whatsapp_trabalho"]
             usuario.save(update_fields=["nome", "whatsapp_trabalho"])
@@ -527,23 +578,38 @@ class PessoaReativarView(AcessoMixin, PessoaDoServicoMixin, View):
 # ---------------------------------------------------------------- link de senha
 
 class PessoaLinkSenhaView(AcessoMixin, PessoaDoServicoMixin, View):
-    """Gera um novo link para a pessoa criar a senha, mostra uma vez na tela dela e tenta o e-mail."""
+    """Gera um novo link para a pessoa criar a senha e tenta o e-mail.
+
+    O link aparece uma vez na tela dela só quando `link_na_tela` deixa; senão vai só para o e-mail.
+    """
 
     acao = "gerir_equipe"
     exige_gerir_pessoa = True
+    proibe_a_si_mesmo = True
+    motivo_a_si_mesmo = "Para trocar a sua senha, use Minha conta, em “Trocar senha”."
     http_method_names = ["post"]
 
     def post(self, request, *args, **kwargs):
         vinculo = self.vinculo
-        if not (vinculo.ativo and vinculo.usuario.is_active):
-            raise PermissionDenied("Reative o acesso da pessoa antes de gerar um link de senha.")
-        if not link_permitido(request, vinculo):
-            raise PermissionDenied(
-                "O link de senha não pode ser gerado para esta pessoa. "
-                "Ela mesma pede um link em “Esqueci a senha”, na tela de entrar."
+        usuario = vinculo.usuario
+        if not pode_mandar_link(request, vinculo):
+            raise PermissionDenied("Reative o acesso da pessoa antes de mandar um link de senha.")
+        na_tela = link_na_tela(usuario, tem_outro_servico(usuario, request.servico))
+        enviado = entregar_link(request, usuario, novo=True, na_tela=na_tela)
+        if na_tela:
+            messages.success(
+                request,
+                "Link novo gerado. Os links gerados antes continuam valendo até vencer ou até a senha ser criada.",
             )
-        entregar_link(request, vinculo.usuario, novo=True)
-        messages.success(request, "Link novo gerado. Os links gerados antes continuam valendo até vencer ou até a senha ser criada.")
+        elif enviado:
+            horas = horas_de_validade()
+            messages.success(
+                request,
+                f"Link para criar a senha mandado para {usuario.email}. Ele vale por "
+                f"{horas} hora{'s' if horas != 1 else ''} e serve uma vez só.",
+            )
+        else:
+            messages.warning(request, "Não deu para mandar o e-mail agora. Tente de novo daqui a pouco.")
         return redirect(self.url_da_pessoa())
 
 
@@ -582,7 +648,7 @@ class ProfessorMixin(PessoaDoServicoMixin):
                     "campos": ["educacao_infantil", "anos_iniciais", "anos_finais", "ensino_medio", "eja"],
                     "ajuda": "Marque todas as que valem.",
                 },
-                {"titulo": "Observações", "campos": ["observacoes"]},
+                {"titulo": "Mais sobre o trabalho", "campos": ["observacoes"]},
             ],
         })
         return contexto
@@ -596,10 +662,18 @@ class ProfessorCriarView(ProfessorPermissaoMixin, AcessoMixin, ProfessorMixin, C
         obj.usuario = self.vinculo.usuario
 
     def form_valid(self, form):
-        if PerfilProfessor.objects.filter(servico=self.request.servico, usuario_id=self.vinculo.usuario_id).exists():
-            messages.info(self.request, "Outra pessoa acabou de criar este perfil. Confira os dados e salve de novo.")
-            return HttpResponseRedirect(self.request.path)
-        return super().form_valid(form)
+        # O perfil é um por pessoa em cada serviço. Se outra pessoa o criou no meio do caminho
+        # (antes da conferência ou entre ela e a gravação), nada é salvo e a tela abre o perfil dela.
+        ja_existe = PerfilProfessor.objects.filter(
+            servico=self.request.servico, usuario_id=self.vinculo.usuario_id
+        ).exists()
+        if not ja_existe:
+            try:
+                return super().form_valid(form)
+            except IntegrityError:
+                pass
+        messages.info(self.request, "Outra pessoa acabou de criar este perfil. Confira os dados e salve de novo.")
+        return HttpResponseRedirect(self.request.path)
 
 
 class ProfessorEditarView(ProfessorPermissaoMixin, AcessoMixin, ProfessorMixin, EditarComAuditoriaMixin, UpdateView):

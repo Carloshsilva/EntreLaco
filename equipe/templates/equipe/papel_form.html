@@ -7,7 +7,7 @@
   <div class="el-pagehead-text">
     <p class="el-breadcrumb"><a href="{% url 'equipe:papeis' %}">{% icone "seta-voltar" %}Papéis e permissões</a></p>
     <h1 class="el-display">{% if papel %}Editar o papel {{ papel.nome }}{% else %}Criar papel{% endif %}</h1>
-    <p class="el-muted">{% if papel %}Pessoas com acesso e este papel: {{ pessoas_com_o_papel }}. A mudança vale a partir da próxima tela aberta.{% else %}Defina o que quem tem este papel vê e edita, e o que pode fazer.{% endif %}</p>
+    <p class="el-muted">{% if papel %}{% if pessoas_com_o_papel %}{{ pessoas_com_o_papel }} pessoa{{ pessoas_com_o_papel|pluralize }} com acesso {{ pessoas_com_o_papel|pluralize:"tem,têm" }} este papel.{% else %}Ninguém com acesso tem este papel agora.{% endif %} A mudança vale a partir da próxima tela aberta.{% else %}Defina o que quem tem este papel vê e edita, e o que pode fazer.{% endif %}</p>
   </div>
 </header>
 

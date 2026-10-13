@@ -1,4 +1,5 @@
 """Pessoas da equipe: lista, cadastro, link de senha, edição, papel, desativar e reativar."""
+from unittest import mock
 from urllib.parse import urlparse
 
 from django.contrib.auth import get_user_model
@@ -213,9 +214,37 @@ class CadastrarPessoaTestes(EquipeTestCase):
         self.assertEqual(len(mail.outbox), 0)
         tela = self.client.get(reverse("equipe:pessoa_detalhe", args=[self.de_fora.pk]))
         self.assertIsNone(tela.context["link"])
-        # Quem também é de outro serviço não recebe link gerado por esta equipe.
-        self.assertNotContains(tela, reverse("equipe:pessoa_link_senha", args=[self.de_fora.pk]))
-        self.assertEqual(self.client.post(reverse("equipe:pessoa_link_senha", args=[self.de_fora.pk])).status_code, 403)
+        # Quem também é de outro serviço recebe o link só no próprio e-mail, nunca na tela desta equipe.
+        self.assertContains(tela, "Mandar link de senha por e-mail")
+        self.assertContains(tela, "Ela já criou a senha")
+        resposta = self.client.post(reverse("equipe:pessoa_link_senha", args=[self.de_fora.pk]))
+        self.assertRedirects(resposta, reverse("equipe:pessoa_detalhe", args=[self.de_fora.pk]),
+                             fetch_redirect_response=False)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["flora@exemplo.org"])
+        depois = self.client.get(reverse("equipe:pessoa_detalhe", args=[self.de_fora.pk]))
+        self.assertIsNone(depois.context["link"])
+        self.assertNotContains(depois, "/senha/definir/")
+
+    def test_email_de_quem_ainda_nao_criou_a_senha_em_outro_servico(self):
+        sem_senha = Usuario.objects.create_user(email="otto.sem.senha@exemplo.org", password=None,
+                                                nome="Otto Sem Senha Inventado")
+        Vinculo.objects.create(usuario=sem_senha, servico=self.outro_servico, papel=self.de_fora.vinculos.get().papel)
+        self.entrar(self.coordenacao)
+        resposta = self.client.post(reverse("equipe:pessoa_nova"), self.dados(email="otto.sem.senha@exemplo.org"))
+        self.assertRedirects(resposta, reverse("equipe:pessoa_detalhe", args=[sem_senha.pk]),
+                             fetch_redirect_response=False)
+        # O link vai para o e-mail dela, sem aparecer na tela de quem cadastrou.
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["otto.sem.senha@exemplo.org"])
+        tela = self.client.get(reverse("equipe:pessoa_detalhe", args=[sem_senha.pk]))
+        self.assertIsNone(tela.context["link"])
+        self.assertNotContains(tela, "/senha/definir/")
+        self.assertContains(tela, "foi mandado para otto.sem.senha@exemplo.org")
+        self.assertContains(tela, "Ela também trabalha em outro serviço, então o link vai só para o e-mail dela.")
+        self.assertContains(tela, "Mandar link de senha por e-mail")
+        self.assertTrue(self.eventos(acao=Acao.OUTRO, objeto_id=str(sem_senha.pk),
+                                     descricao__startswith="Mandou por e-mail").exists())
 
     def test_email_que_ja_esta_na_equipe(self):
         self.entrar(self.coordenacao)
@@ -288,6 +317,29 @@ class EditarPessoaTestes(EquipeTestCase):
         self.assertEqual(evento.servico, self.servico)
         self.assertFalse(self.eventos(acao=Acao.MUDOU_PAPEL).exists())
 
+    def test_pessoa_que_tambem_trabalha_em_outro_servico(self):
+        dupla = criar_pessoa(self.servico, self.papel_professor, nome="Dora Dupla Inventada",
+                             whatsapp_trabalho="(11) 97777-0000")
+        Vinculo.objects.create(usuario=dupla, servico=self.outro_servico, papel=self.de_fora.vinculos.get().papel)
+        self.entrar(self.supervisao)
+        url = reverse("equipe:pessoa_editar", args=[dupla.pk])
+        tela = self.client.get(url)
+        self.assertContains(tela, "também trabalha em outro serviço")
+        self.assertTrue(tela.context["form"].fields["nome"].disabled)
+        self.assertTrue(tela.context["form"].fields["whatsapp_trabalho"].disabled)
+        # Mesmo que o envio tente mudar o nome, o cadastro comum aos serviços fica como estava; o papel muda.
+        resposta = self.client.post(url, {
+            "nome": "Nome Trocado Por Este Servico", "whatsapp_trabalho": "", "papel": self.papel_coordenacao.pk,
+            "motivo_alteracao": "Passou a coordenar a equipe",
+        })
+        self.assertRedirects(resposta, reverse("equipe:pessoa_detalhe", args=[dupla.pk]))
+        dupla.refresh_from_db()
+        self.assertEqual(dupla.nome, "Dora Dupla Inventada")
+        self.assertEqual(dupla.whatsapp_trabalho, "(11) 97777-0000")
+        self.assertEqual(Vinculo.objects.get(usuario=dupla, servico=self.servico).papel, self.papel_coordenacao)
+        self.assertFalse(self.eventos(acao=Acao.ALTEROU, modelo="core.Usuario", objeto_id=str(dupla.pk)).exists())
+        self.assertTrue(self.eventos(acao=Acao.MUDOU_PAPEL).exists())
+
     def test_ninguem_muda_o_proprio_papel(self):
         self.entrar(self.supervisao)
         self.client.post(reverse("equipe:pessoa_editar", args=[self.supervisao.pk]), {
@@ -313,7 +365,6 @@ class EditarPessoaTestes(EquipeTestCase):
         self.assertEqual(self.apoio.nome, "Abel Mudado Por Outra")
         # O WhatsApp, que só a outra pessoa mudou, volta com o valor dela no formulário.
         self.assertContains(resposta, "11 95555-0000")
-
 
     def test_erro_de_validacao_nao_esconde_mudanca_de_outra_pessoa(self):
         self.entrar(self.coordenacao)
@@ -404,18 +455,74 @@ class DesativarPessoaTestes(EquipeTestCase):
 
 
 class LinkDeSenhaTestes(EquipeTestCase):
-    def test_gerar_novo_link(self):
+    def sem_senha(self):
+        """Pessoa só deste serviço que ainda não criou a senha (o primeiro link venceu)."""
+        pessoa = Usuario.objects.create_user(email="lia.sem.senha@exemplo.org", password=None,
+                                             nome="Lia Sem Senha Inventada")
+        Vinculo.objects.create(usuario=pessoa, servico=self.servico, papel=self.papel_professor)
+        return pessoa
+
+    def test_gerar_novo_link_para_quem_ainda_nao_criou_a_senha(self):
+        pessoa = self.sem_senha()
         self.entrar(self.coordenacao)
-        url = reverse("equipe:pessoa_link_senha", args=[self.apoio.pk])
+        url = reverse("equipe:pessoa_link_senha", args=[pessoa.pk])
         self.assertEqual(self.client.get(url).status_code, 405)
+        self.assertContains(self.client.get(reverse("equipe:pessoa_detalhe", args=[pessoa.pk])), "Gerar novo link de senha")
         resposta = self.client.post(url)
-        self.assertRedirects(resposta, reverse("equipe:pessoa_detalhe", args=[self.apoio.pk]), fetch_redirect_response=False)
-        tela = self.client.get(reverse("equipe:pessoa_detalhe", args=[self.apoio.pk]))
+        self.assertRedirects(resposta, reverse("equipe:pessoa_detalhe", args=[pessoa.pk]), fetch_redirect_response=False)
+        tela = self.client.get(reverse("equipe:pessoa_detalhe", args=[pessoa.pk]))
         link = tela.context["link"]["link"]
+        self.assertContains(tela, link)
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(link, mail.outbox[0].body)
-        self.assertEqual(Client().get(urlparse(link).path).status_code, 302)
-        self.assertTrue(self.eventos(acao=Acao.OUTRO, modelo="core.Usuario", objeto_id=str(self.apoio.pk)).exists())
+        # O link abre o fluxo de definir senha do núcleo: 302 para a tela com o formulário, que responde 200.
+        navegador = Client()
+        resposta = navegador.get(urlparse(link).path)
+        self.assertEqual(resposta.status_code, 302)
+        self.assertContains(navegador.get(resposta["Location"]), "Salvar senha")
+        self.assertTrue(self.eventos(acao=Acao.OUTRO, modelo="core.Usuario", objeto_id=str(pessoa.pk),
+                                     descricao__startswith="Gerou um novo link").exists())
+
+    def test_quem_ja_tem_senha_recebe_o_link_so_por_email(self):
+        self.entrar(self.coordenacao)
+        detalhe = reverse("equipe:pessoa_detalhe", args=[self.apoio.pk])
+        tela = self.client.get(detalhe)
+        self.assertContains(tela, "Mandar link de senha por e-mail")
+        self.assertContains(tela, "Ela já criou a senha")
+        self.assertNotContains(tela, "Gerar novo link de senha")
+        resposta = self.client.post(reverse("equipe:pessoa_link_senha", args=[self.apoio.pk]), follow=True)
+        self.assertRedirects(resposta, detalhe)
+        self.assertContains(resposta, "Link para criar a senha mandado para abel@exemplo.org")
+        self.assertIsNone(resposta.context["link"])
+        self.assertNotContains(resposta, "/senha/definir/")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["abel@exemplo.org"])
+        self.assertIn("/senha/definir/", mail.outbox[0].body)
+        self.assertTrue(self.eventos(acao=Acao.OUTRO, modelo="core.Usuario", objeto_id=str(self.apoio.pk),
+                                     descricao__startswith="Mandou por e-mail").exists())
+
+    def test_email_que_falha(self):
+        pessoa = self.sem_senha()
+        self.entrar(self.coordenacao)
+        with mock.patch("equipe.views.send_mail", side_effect=OSError("servidor de e-mail fora do ar")), \
+                self.assertLogs("equipe.views", "WARNING") as registro:
+            na_tela = self.client.post(reverse("equipe:pessoa_link_senha", args=[pessoa.pk]), follow=True)
+            so_email = self.client.post(reverse("equipe:pessoa_link_senha", args=[self.apoio.pk]), follow=True)
+        self.assertEqual(len(registro.records), 2)
+        # Na tela, o link continua para ser mandado pelo WhatsApp de trabalho.
+        self.assertIsNotNone(na_tela.context["link"])
+        self.assertContains(na_tela, "Não deu para mandar o link por e-mail agora")
+        self.assertContains(so_email, "Não deu para mandar o e-mail agora")
+        self.assertIsNone(so_email.context["link"])
+        self.assertTrue(self.eventos(acao=Acao.OUTRO, objeto_id=str(self.apoio.pk),
+                                     descricao__endswith="o e-mail não foi enviado").exists())
+
+    def test_ninguem_gera_link_para_si_mesmo(self):
+        self.entrar(self.coordenacao)
+        tela = self.client.get(reverse("equipe:pessoa_detalhe", args=[self.coordenacao.pk]))
+        self.assertNotContains(tela, reverse("equipe:pessoa_link_senha", args=[self.coordenacao.pk]))
+        self.assertEqual(self.client.post(reverse("equipe:pessoa_link_senha", args=[self.coordenacao.pk])).status_code, 403)
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_quem_so_cuida_da_equipe_nao_gera_link_de_quem_configura(self):
         self.entrar(self.coordenacao)

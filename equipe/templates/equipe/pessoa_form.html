@@ -12,7 +12,7 @@
     {% endif %}
     <h1 class="el-display">{{ titulo }}</h1>
     {% if pessoa %}
-    <p class="el-muted">E-mail de acesso: {{ pessoa.email }}. O e-mail não muda por aqui.</p>
+    <p class="el-muted">E-mail de acesso: {{ pessoa.email }}. O e-mail não muda por aqui.{% if compartilhada %} Como a pessoa também trabalha em outro serviço, aqui só muda o papel dela neste serviço.{% endif %}</p>
     {% else %}
     <p class="el-muted">A pessoa recebe um link para criar a própria senha. Cada pessoa tem o seu login: não use conta compartilhada.</p>
     {% endif %}

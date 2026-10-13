@@ -72,6 +72,10 @@ def limpar_whatsapp(valor):
 
 
 AJUDA_WHATSAPP = "Com DDD. Fica guardado para quando o envio por WhatsApp chegar; nesta versão, nada é enviado por ele."
+AJUDA_COMPARTILHADA = (
+    "Esta pessoa também trabalha em outro serviço da EntreLaço, e este dado vale para todos eles. "
+    "Para corrigir, peça ao administrador da plataforma."
+)
 ERROS_DO_NOME = {"required": "Falta o nome. Digite o nome completo da pessoa."}
 ERROS_DO_PAPEL = {
     "required": "Falta o papel. Escolha o que a pessoa vai fazer no serviço.",
@@ -97,7 +101,7 @@ class PessoaNovaForm(FormularioBase):
         widget=TelefoneInput(attrs={"autocomplete": "off"}),
     )
     papel = CampoPapel(
-        label="Papel no serviço", queryset=Papel.objects.none(), empty_label="Escolha o papel",
+        label="Papel", queryset=Papel.objects.none(), empty_label="Escolha o papel",
         help_text="O papel define o que a pessoa vê e edita.", error_messages=ERROS_DO_PAPEL,
     )
 
@@ -138,12 +142,21 @@ class PessoaEditarForm(FormularioBase, MotivoDaAlteracaoMixin):
         widget=TelefoneInput(attrs={"autocomplete": "off"}),
     )
     papel = CampoPapel(
-        label="Papel no serviço", queryset=Papel.objects.none(), empty_label="Escolha o papel",
+        label="Papel", queryset=Papel.objects.none(), empty_label="Escolha o papel",
         help_text="O papel define o que a pessoa vê e edita.", error_messages=ERROS_DO_PAPEL,
     )
 
-    def __init__(self, *args, servico, acesso, a_si_mesmo=False, **kwargs):
+    def __init__(self, *args, servico, acesso, a_si_mesmo=False, compartilhada=False, **kwargs):
         super().__init__(*args, **kwargs)
+        if compartilhada:
+            # O cadastro da pessoa é um só para todos os serviços em que ela trabalha: um serviço
+            # não muda o que aparece no outro (SEG-05).
+            for nome in ("nome", "whatsapp_trabalho"):
+                self.fields[nome].disabled = True
+                self.fields[nome].required = False
+                self.fields[nome].widget.attrs.pop("required", None)
+            self.fields["nome"].help_text = AJUDA_COMPARTILHADA
+            self.fields["whatsapp_trabalho"].help_text = AJUDA_COMPARTILHADA
         self.fields["papel"].queryset = papeis_que_pode_dar(servico, acesso)
         if a_si_mesmo:
             # Ninguém muda o próprio papel: nem para ganhar permissão, nem para perder o acesso sem querer.
@@ -154,9 +167,13 @@ class PessoaEditarForm(FormularioBase, MotivoDaAlteracaoMixin):
             self.fields["papel"].help_text += " Papéis que configuram o serviço só podem ser dados por quem configura."
 
     def clean_nome(self):
+        if self.fields["nome"].disabled:
+            return self.cleaned_data.get("nome") or ""
         return " ".join(self.cleaned_data["nome"].split())
 
     def clean_whatsapp_trabalho(self):
+        if self.fields["whatsapp_trabalho"].disabled:
+            return self.cleaned_data.get("whatsapp_trabalho") or ""
         return limpar_whatsapp(self.cleaned_data.get("whatsapp_trabalho"))
 
     @staticmethod
@@ -198,6 +215,8 @@ class PerfilProfessorForm(ModeloFormularioBase):
         model = PerfilProfessor
         fields = ["componentes", "educacao_infantil", "anos_iniciais", "anos_finais", "ensino_medio", "eja", "observacoes"]
         widgets = {"componentes": CheckboxSelectMultiple}
+        # A seção da tela já se chama "O que ensina"; o grupo de caixas leva um nome próprio.
+        labels = {"componentes": "Componentes curriculares"}
         help_texts = {
             "componentes": "Marque os componentes curriculares que a pessoa ensina.",
             "observacoes": "Exemplo: dias e turnos em que atende, formação, línguas que fala.",

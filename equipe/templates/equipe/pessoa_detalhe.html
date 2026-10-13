@@ -59,12 +59,15 @@
     <div><dt>Senha</dt><dd>{% if senha_criada %}Criada{% else %}Ainda não criou a senha{% endif %}</dd></div>
   </dl>
   {% if pode_gerar_link %}
+  {% if link_na_tela %}
+  <p class="el-muted" id="ajuda-link-senha">O link aparece nesta tela uma vez, para você mandar pelo WhatsApp de trabalho, e também vai para {{ pessoa.email }}.</p>
+  {% else %}
+  <p class="el-muted" id="ajuda-link-senha">{{ so_por_email }} Ninguém mais vê o link.</p>
+  {% endif %}
   <form class="el-actions" method="post" action="{% url 'equipe:pessoa_link_senha' pessoa.pk %}">
     {% csrf_token %}
-    <button type="submit" class="el-btn el-btn-secondary">{% icone "chave" %}Gerar novo link de senha</button>
+    <button type="submit" class="el-btn el-btn-secondary" aria-describedby="ajuda-link-senha">{% icone "chave" %}{% if link_na_tela %}Gerar novo link de senha{% else %}Mandar link de senha por e-mail{% endif %}</button>
   </form>
-  {% elif pode_editar and ativa and tem_outro_servico and not a_si_mesmo %}
-  <p class="el-muted">Esta pessoa também tem acesso por outro serviço. Para criar uma senha nova, ela usa “Esqueci a senha”, na tela de entrar.</p>
   {% endif %}
 </section>
 
