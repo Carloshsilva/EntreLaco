@@ -18,6 +18,16 @@
   <ul class="el-list-plain">{% for v in vinculos %}<li>{{ v.servico.nome }}: {{ v.papel.nome }}</li>{% endfor %}</ul>
   {% else %}<p class="el-muted">Nenhum serviço ainda.</p>{% endif %}
 </section>
+{% if vinculos %}
+<section class="el-card" aria-labelledby="professor">
+  <h2 id="professor" class="el-heading">Se você dá aula</h2>
+  <p>Diga o que você ensina e veja a sua agenda de aulas e reuniões.</p>
+  <div class="el-actions">
+    <a class="el-btn el-btn-secondary" href="{% url 'equipe:professor' user.pk %}">{% icone "aula" %}Editar o que você ensina</a>
+    <a class="el-btn el-btn-quiet" href="{% url 'agenda' %}?pessoa={{ user.pk }}">{% icone "agenda" %}Ver sua agenda</a>
+  </div>
+</section>
+{% endif %}
 <section class="el-card" aria-labelledby="seguranca">
   <h2 id="seguranca" class="el-heading">Segurança</h2>
   <p>Verificação em duas etapas: {% if user.totp_ativo %}<span class="el-badge el-badge-success">Ativa</span>{% elif precisa_duas_etapas %}<span class="el-badge el-badge-danger">Obrigatória e ainda não ativada</span>{% else %}<span class="el-badge">Não ativada</span>{% endif %}</p>

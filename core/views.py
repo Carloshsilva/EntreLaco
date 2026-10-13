@@ -10,9 +10,10 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login, logout, update_session_auth_hash
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth.forms import PasswordChangeForm, PasswordResetForm
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
@@ -27,6 +28,7 @@ from . import auditoria
 from .formularios import FormularioBase, preparar_campos
 from .middleware import CHAVE_SERVICO, precisa_duas_etapas
 from .models import EventoAuditoria, Vinculo
+from .permissoes import CODIGOS_DE_GRUPO
 from .registro import eventos_da_agenda, pendencias_para
 
 CHAVE_USUARIO_PENDENTE = "entrar_usuario_pendente"
@@ -237,7 +239,22 @@ def duas_etapas(request):
     })
 
 
+class PedirLinkDeSenhaForm(PasswordResetForm):
+    """Também atende quem foi cadastrado e ainda não criou a senha (o primeiro link pode ter vencido)."""
+
+    def get_users(self, email):
+        usuarios = get_user_model()._default_manager.filter(
+            email__iexact=email, is_active=True, vinculos__ativo=True, vinculos__servico__ativo=True,
+        ).distinct()
+        return (u for u in usuarios if _iequal(u.email, email))
+
+
+def _iequal(a, b):
+    return (a or "").casefold() == (b or "").casefold()
+
+
 class RedefinirSenhaView(auth_views.PasswordResetView):
+    form_class = PedirLinkDeSenhaForm
     template_name = "core/senha/pedir.html"
     email_template_name = "core/senha/email.txt"
     subject_template_name = "core/senha/assunto.txt"
@@ -382,9 +399,9 @@ def trilha(request):
         eventos = eventos.filter(usuario_id=int(pessoa))
     if acao in EventoAuditoria.Acao.values:
         eventos = eventos.filter(acao=acao)
+    eventos = eventos.filter(Q(grupo="") | Q(grupo__in=[g for g in CODIGOS_DE_GRUPO if request.acesso.pode_ver(g)]))
     pagina = Paginator(eventos, 50).get_page(request.GET.get("pagina"))
-    for evento in pagina:
-        evento.mudancas_permitidas = auditoria.mudancas_visiveis(evento, request.acesso)
+    pagina.object_list = auditoria.preparar_para_exibir(list(pagina.object_list), request.acesso)
     pessoas = get_user_model().objects.filter(vinculos__servico=request.servico).order_by("nome").distinct()
     return render(request, "core/trilha.html", {
         "pagina": pagina,
@@ -403,17 +420,14 @@ def eventos_do_objeto(request, obj, limite=20):
     eventos = list(
         EventoAuditoria.objects.filter(servico=request.servico, modelo=obj._meta.label, objeto_id=str(obj.pk))[:limite]
     )
-    for evento in eventos:
-        evento.mudancas_permitidas = auditoria.mudancas_visiveis(evento, request.acesso)
-    return eventos
+    return auditoria.preparar_para_exibir(eventos, request.acesso)
 
 
 def eventos_do_aluno(request, aluno_id, limite=30):
     """Tudo o que aconteceu com um aluno, em qualquer cadastro ligado a ele."""
-    eventos = list(EventoAuditoria.objects.filter(servico=request.servico, aluno_id=aluno_id)[:limite])
-    for evento in eventos:
-        evento.mudancas_permitidas = auditoria.mudancas_visiveis(evento, request.acesso)
-    return eventos
+    eventos = EventoAuditoria.objects.filter(servico=request.servico, aluno_id=aluno_id)
+    eventos = eventos.filter(Q(grupo="") | Q(grupo__in=[g for g in CODIGOS_DE_GRUPO if request.acesso.pode_ver(g)]))
+    return auditoria.preparar_para_exibir(list(eventos[:limite]), request.acesso)
 
 
 # ---------------------------------------------------------------- erros

@@ -136,9 +136,7 @@ def eventos_da_aula(request, aula, limite=30):
     if fotos:
         filtro |= Q(modelo=FotoDaAula._meta.label, objeto_id__in=fotos)
     eventos = list(EventoAuditoria.objects.filter(servico=request.servico).filter(filtro)[:limite])
-    for evento in eventos:
-        evento.mudancas_permitidas = auditoria.mudancas_visiveis(evento, request.acesso)
-    return eventos
+    return auditoria.preparar_para_exibir(eventos, request.acesso)
 
 
 def _aluno_da_consulta(request):

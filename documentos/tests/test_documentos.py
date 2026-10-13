@@ -175,7 +175,7 @@ class DetalheTestes(BaseDocumentos):
             "tipo": "termo", "titulo": "Termo inventado", "arquivo": enviado("t.pdf", PDF, "application/pdf"),
         })
         resposta = self.client.get(self.url(Documento.objects.get()))
-        self.assertContains(resposta, "<strong>Abel Apoio Inventado</strong> criou", html=True)
+        self.assertContains(resposta, "<strong>Abel Apoio Inventado</strong> criou documento", html=True)
 
 
 class EditarTestes(BaseDocumentos):

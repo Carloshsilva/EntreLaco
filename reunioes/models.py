@@ -87,5 +87,9 @@ class CitacaoDeAluno(ModeloDoServico):
     def __str__(self):
         return f"{self.aluno} na {self.reuniao}"
 
+    def grupo_na_trilha(self):
+        """Na trilha, a citação de saúde fica com o tipo dela: quem não vê saúde não vê o evento."""
+        return self.grupo_de_dado
+
     def visivel_para(self, acesso):
         return acesso.pode_ver("atas") and acesso.pode_ver(self.grupo_de_dado)

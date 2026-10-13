@@ -48,9 +48,12 @@ def e_lista_de_opcoes(campo):
 @register.filter
 def e_largo(campo):
     """Campo que ocupa a linha inteira no formulário de duas colunas."""
-    return campo.widget_type in {
-        "textarea", "checkboxselectmultiple", "radioselect", "clearablefile", "file", "selectmultiple",
-    }
+    from django import forms
+
+    return isinstance(
+        campo.field.widget,
+        (forms.Textarea, forms.FileInput, forms.CheckboxSelectMultiple, forms.RadioSelect, forms.SelectMultiple),
+    )
 
 
 @register.filter

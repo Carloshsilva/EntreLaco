@@ -212,6 +212,9 @@ class EventoAuditoria(models.Model):
     objeto_id = models.CharField(max_length=40, blank=True)
     objeto_repr = models.CharField(max_length=200, blank=True)
     aluno_id = models.PositiveBigIntegerField(null=True, blank=True, db_index=True)
+    # Tipo de dado do registro inteiro, quando ele tem um só (ex.: citação de saúde). Quem não vê
+    # esse tipo não vê o evento, nem o motivo.
+    grupo = models.CharField(max_length=30, blank=True)
     # {campo: {"rotulo": ..., "grupo": ..., "de": ..., "para": ...}}
     mudancas = models.JSONField(default=dict, blank=True)
     motivo = models.TextField(blank=True)
@@ -227,6 +230,16 @@ class EventoAuditoria(models.Model):
 
     def __str__(self):
         return f"{self.usuario_nome} {self.get_acao_display().lower()} {self.objeto_repr}"
+
+    @property
+    def tipo_de_registro(self):
+        """Nome legível do tipo de registro ("responsável", "aula"), sem expor o conteúdo."""
+        from django.apps import apps
+
+        try:
+            return str(apps.get_model(self.modelo)._meta.verbose_name) if self.modelo else ""
+        except (LookupError, ValueError):
+            return ""
 
     def save(self, *args, **kwargs):
         if self.pk:

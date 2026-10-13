@@ -21,6 +21,7 @@ class ItemDeMenu:
     ordem: int = 50
     principal: bool = False  # aparece na barra de baixo do celular (no máximo 4)
     grupo: str | None = None  # tipo de dado que a pessoa precisa ao menos ver
+    grupos: tuple = ()  # vários tipos de dado, todos exigidos (além de `grupo`)
     acao: str | None = None  # ação de ACOES exigida
     configurar: bool = False  # só quem configura o serviço
     ativo_em: tuple = ()  # prefixos de nome de URL que marcam o item como atual
@@ -47,6 +48,8 @@ def menu_para(request):
         if item.acao and not acesso.tem(item.acao):
             continue
         if item.grupo and not acesso.pode_ver(item.grupo):
+            continue
+        if any(not acesso.pode_ver(g) for g in item.grupos):
             continue
         try:
             url = reverse(item.url_nome)
@@ -132,7 +135,9 @@ class Pendencia:
     def situacao_do_prazo(self):
         if self.prazo is None:
             return "sem_prazo"
-        hoje = datetime.date.today()
+        from django.utils import timezone
+
+        hoje = timezone.localdate()
         if self.prazo < hoje:
             return "vencida"
         if self.prazo == hoje:
@@ -199,3 +204,21 @@ def eventos_da_agenda(request, inicio, fim, usuario=None):
         eventos.extend(funcao(request, inicio, fim, usuario) or [])
     eventos.sort(key=lambda e: (e.data, e.hora or datetime.time.min, e.titulo))
     return eventos
+
+
+def conferir_secoes_do_aluno(app_configs=None, **kwargs):
+    """System check: toda seção registrada aponta para um template que existe."""
+    from django.core.checks import Error
+    from django.template import TemplateDoesNotExist
+    from django.template.loader import get_template
+
+    erros = []
+    for secao in _SECOES_DO_ALUNO:
+        try:
+            get_template(secao.template)
+        except TemplateDoesNotExist:
+            erros.append(Error(
+                f"A seção do aluno '{secao.chave}' aponta para o template {secao.template}, que não existe.",
+                id="entrelaco.E001",
+            ))
+    return erros

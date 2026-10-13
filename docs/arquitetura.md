@@ -45,11 +45,15 @@ Os requisitos citados (RF, RNF, SEG, LGPD) estão em [requisitos.md](requisitos.
   por tipo, se a pessoa não vê, vê ou edita.
 - Cada modelo declara `GRUPOS_DE_CAMPOS = {tipo: [campos]}`. Todo campo que aparece em tela precisa estar
   em um tipo. `campos_permitidos(Modelo, request.acesso, "ver"|"editar")` diz o que mostrar ou editar.
-- Telas: `AcessoMixin` com `grupo` e `modo`, ou `acao`, ou `exige_configurar`. Views em função conferem
-  `request.acesso.pode_ver(grupo)`, `pode_editar(grupo)` e `tem(acao)` e levantam `PermissionDenied`.
+- Telas: `AcessoMixin` com `grupo` e `modo`, ou `acao`, ou `exige_configurar`. Tela que só exige login e
+  serviço declara `so_login = True`, de propósito; tela com regra própria sobrescreve `tem_permissao`.
+  Sem nenhuma dessas declarações, a tela levanta `ImproperlyConfigured`. Telas de cadastro e edição
+  (os mixins de auditoria) sempre exigem editar o `grupo`, qualquer que seja a ordem dos mixins.
+  Views em função conferem `request.acesso.pode_ver(grupo)`, `pode_editar(grupo)` e `tem(acao)` e
+  levantam `PermissionDenied`.
 - Templates: `{% if acesso|pode_ver:"sensivel" %}`, `{% if acesso|pode_editar:"aulas" %}`,
   `{% if acesso|tem_acao:"mudar_situacao" %}`. Botão que a pessoa não pode usar não aparece.
-- Um dado escondido some de tudo: tela, lista, busca, resumo, PDF e trilha (`auditoria.mudancas_visiveis`).
+- Um dado escondido some de tudo: tela, lista, busca, resumo, PDF e trilha (`auditoria.preparar_para_exibir`).
 
 ### 3. Trilha de auditoria (SEG-03, SEG-04)
 
@@ -59,6 +63,13 @@ Os requisitos citados (RF, RNF, SEG, LGPD) estão em [requisitos.md](requisitos.
 - Também vão para a trilha: mudança de situação do aluno (`Acao.MUDOU_SITUACAO`), autorização colhida ou
   revogada (`Acao.ASSINOU`/`Acao.ALTEROU`), abertura de documento (`Acao.BAIXOU_ARQUIVO`), validação
   (`Acao.VALIDOU`), papel e permissão (`Acao.MUDOU_PAPEL`, `Acao.LIBEROU_PERMISSAO`) e exclusão (`Acao.EXCLUIU`).
+- Cada evento guarda o tipo de dado do registro (`grupo`): o único tipo de `GRUPOS_DE_CAMPOS`, ou o que o
+  modelo devolve em `grupo_na_trilha()` (a citação de saúde fica com o tipo dela). Quem não vê esse tipo
+  não vê o evento, nem o motivo. Em modelos com vários tipos (a ficha do aluno), cada mudança é filtrada
+  campo a campo, e o motivo só aparece para quem vê alguma das mudanças.
+- Para mudar o que vai para a trilha (por exemplo, nomes em vez de ids), sobrescreva
+  `mudancas_para_trilha(obj, mudancas)` no mixin de criar ou editar.
+- Lista de eventos montada à mão passa sempre por `auditoria.preparar_para_exibir(eventos, request.acesso)`.
 - Na tela de um registro, mostre o histórico com
   `{% include "core/_trilha.html" with eventos=eventos %}`, onde `eventos = core.views.eventos_do_objeto(request, obj)`
   (ou `eventos_do_aluno(request, aluno.pk)` no perfil do aluno).
@@ -75,11 +86,13 @@ valor dela; campo que as duas mudaram mostra as duas versões e nada é salvo at
 Cada app registra no seu `encaixes.py` (importado pelo `ready()` do AppConfig):
 
 - `registrar_menu(ItemDeMenu(...))`: item do menu lateral e da barra de baixo (já feito para todas as apps).
+  `grupo` exige ver um tipo de dado; `grupos=(...)` exige ver todos os tipos da lista.
 - `registrar_secao_do_aluno(SecaoDoAluno(chave, titulo, template, contexto, grupo, ordem))`: uma seção do
   perfil do aluno. `contexto(request, aluno)` devolve um dicionário (ou `None` para esconder). O perfil
   desenha cada seção como `<section id="secao-{chave}" class="el-card">` com o título num `h2`, e inclui o
   template da seção com `dados` (o dicionário), `aluno`, `acesso` e `request`. O template da seção não
-  repete o título; dentro dele, use `h3`.
+  repete o título; dentro dele, use `h3`. O `manage.py check` acusa (`entrelaco.E001`) seção cujo
+  template não existe.
   Ordem combinada: ficha 10, responsáveis 20, autorizações 30, aulas 40, citações em reunião 50,
   documentos 60, situação 70, histórico de alterações 90.
 - `registrar_fonte_de_pendencias(funcao)`: `funcao(request, usuario, todas)` devolve uma lista de

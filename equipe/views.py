@@ -172,9 +172,7 @@ def eventos_da_pessoa(request, vinculo, perfil=None, limite=30):
     if perfil is not None:
         filtro |= Q(modelo=PerfilProfessor._meta.label, objeto_id=str(perfil.pk))
     eventos = list(EventoAuditoria.objects.filter(servico=request.servico).filter(filtro)[:limite])
-    for evento in eventos:
-        evento.mudancas_permitidas = auditoria.mudancas_visiveis(evento, request.acesso)
-    return eventos
+    return auditoria.preparar_para_exibir(eventos, request.acesso)
 
 
 # ---------------------------------------------------------------- mixins

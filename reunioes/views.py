@@ -203,8 +203,7 @@ class DetalheDaReuniao(AcessoMixin, DoServicoMixin, DetailView):
                 servico=request.servico, modelo=CitacaoDeAluno._meta.label,
                 objeto_id__in=[str(citacao.pk) for citacao in citacoes],
             )[:LIMITE_DO_HISTORICO])
-            for evento in eventos_das_citacoes:
-                evento.mudancas_permitidas = auditoria.mudancas_visiveis(evento, request.acesso)
+            eventos_das_citacoes = auditoria.preparar_para_exibir(eventos_das_citacoes, request.acesso)
             eventos = sorted(eventos + eventos_das_citacoes, key=lambda e: (e.criado_em, e.pk), reverse=True)
         contexto.update({
             "citacoes": citacoes,

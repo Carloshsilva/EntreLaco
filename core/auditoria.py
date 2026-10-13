@@ -73,7 +73,20 @@ def comparar(modelo, antes, depois):
     return mudancas
 
 
-def registrar(request, acao, obj=None, *, mudancas=None, motivo="", descricao="", servico=None, aluno=None, usuario=None):
+def grupo_do_registro(obj):
+    """Tipo de dado do registro inteiro, quando dá para dizer: o modelo pode definir `grupo_na_trilha()`;
+    senão, vale o único tipo de GRUPOS_DE_CAMPOS. Modelo com vários tipos (a ficha do aluno) fica sem grupo
+    e a visibilidade é decidida campo a campo."""
+    if obj is None:
+        return ""
+    if hasattr(obj, "grupo_na_trilha"):
+        return obj.grupo_na_trilha() or ""
+    grupos = list(getattr(obj, "GRUPOS_DE_CAMPOS", {}) or {})
+    return grupos[0] if len(grupos) == 1 else ""
+
+
+def registrar(request, acao, obj=None, *, mudancas=None, motivo="", descricao="", servico=None, aluno=None, usuario=None,
+              grupo=None):
     """Grava um evento na trilha. Chame dentro da mesma transação da mudança."""
     usuario = usuario or (getattr(request, "user", None) if request is not None else None)
     if usuario is not None and not getattr(usuario, "is_authenticated", False):
@@ -93,6 +106,7 @@ def registrar(request, acao, obj=None, *, mudancas=None, motivo="", descricao=""
         objeto_id=str(obj.pk) if obj is not None and obj.pk is not None else "",
         objeto_repr=str(obj)[:200] if obj is not None else "",
         aluno_id=aluno_id,
+        grupo=grupo if grupo is not None else grupo_do_registro(obj),
         mudancas=mudancas or {},
         motivo=motivo or "",
         descricao=descricao[:255],
@@ -113,4 +127,27 @@ def mudancas_visiveis(evento, acesso):
         grupo = mudanca.get("grupo")
         if grupo is None or acesso.pode_ver(grupo):
             visiveis[nome] = mudanca
+    return visiveis
+
+
+def evento_visivel(evento, acesso):
+    """O evento inteiro some para quem não vê o tipo de dado do registro."""
+    return not evento.grupo or acesso.pode_ver(evento.grupo)
+
+
+def preparar_para_exibir(eventos, acesso):
+    """Filtra os eventos visíveis e marca o que de cada um a pessoa pode ver.
+
+    - `mudancas_permitidas`: só as mudanças em tipos de dado que ela vê;
+    - `motivo_visivel`: o motivo aparece só se ela vê alguma das mudanças (ou se o evento não tem mudanças),
+      porque o motivo de uma edição de saúde pode falar de saúde.
+    """
+    visiveis = []
+    for evento in eventos:
+        if not evento_visivel(evento, acesso):
+            continue
+        evento.mudancas_permitidas = mudancas_visiveis(evento, acesso)
+        evento.mudancas_escondidas = len(evento.mudancas or {}) - len(evento.mudancas_permitidas)
+        evento.motivo_visivel = bool(evento.mudancas_permitidas) or not evento.mudancas
+        visiveis.append(evento)
     return visiveis

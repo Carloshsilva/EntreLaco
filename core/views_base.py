@@ -13,7 +13,8 @@ import json
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core import signing
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import FieldDoesNotExist
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -36,6 +37,7 @@ class AcessoMixin(LoginRequiredMixin):
     modo = VER
     acao = None
     exige_configurar = False
+    so_login = False  # True: a tela só exige login e serviço (diga isso de propósito)
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -47,12 +49,20 @@ class AcessoMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
     def tem_permissao(self, request):
+        declarou = self.grupo or self.acao or self.exige_configurar or self.so_login
+        # Quem sobrescreve tem_permissao já diz a regra no próprio código.
+        if not declarou and type(self).tem_permissao is AcessoMixin.tem_permissao:
+            raise ImproperlyConfigured(
+                f"{type(self).__name__} não diz que permissão exige: defina grupo, acao, exige_configurar ou so_login."
+            )
         acesso = request.acesso
         if self.exige_configurar and not acesso.configurar:
             return False
         if self.acao and not acesso.tem(self.acao):
             return False
-        if self.grupo and not acesso.pode(self.grupo, self.modo):
+        # Tela de cadastro ou edição sempre exige editar, qualquer que seja a ordem dos mixins.
+        modo = EDITAR if getattr(self, "exige_edicao", False) else self.modo
+        if self.grupo and not acesso.pode(self.grupo, modo):
             return False
         return True
 
@@ -86,19 +96,25 @@ class FormularioPorPermissaoMixin:
 
 
 def _e_campo_do_modelo(modelo, nome):
+    """Campo de verdade do modelo (inclui muitos-para-muitos; exclui relações reversas)."""
     try:
-        modelo._meta.get_field(nome)
-        return True
-    except Exception:  # noqa: BLE001 - FieldDoesNotExist e afins
+        campo = modelo._meta.get_field(nome)
+    except FieldDoesNotExist:
         return False
+    return not campo.auto_created or campo.concrete
 
 
 class CriarComAuditoriaMixin(FormularioPorPermissaoMixin):
     modo = EDITAR
+    exige_edicao = True
     mensagem_sucesso = "Salvo."
 
     def preparar_objeto(self, obj, form):
         """Gancho para preencher campos que não vêm do formulário."""
+
+    def mudancas_para_trilha(self, obj, mudancas):
+        """Gancho para ajustar as mudanças antes de irem para a trilha (por exemplo, o tipo de dado)."""
+        return mudancas
 
     def form_valid(self, form):
         with transaction.atomic():
@@ -111,7 +127,7 @@ class CriarComAuditoriaMixin(FormularioPorPermissaoMixin):
             form.save_m2m()
             campos = self.campos_auditados(form)
             depois = auditoria.fotografar(obj, campos)
-            mudancas = auditoria.comparar(type(obj), {}, depois)
+            mudancas = self.mudancas_para_trilha(obj, auditoria.comparar(type(obj), {}, depois))
             auditoria.registrar(self.request, auditoria.Acao.CRIOU, obj, mudancas=mudancas)
             self.object = obj
             self.depois_de_salvar(obj, form, criado=True)
@@ -139,6 +155,7 @@ class EditarComAuditoriaMixin(FormularioPorPermissaoMixin):
     """
 
     modo = EDITAR
+    exige_edicao = True
     edicao = True
     mensagem_sucesso = "Alterações salvas."
 
@@ -177,7 +194,7 @@ class EditarComAuditoriaMixin(FormularioPorPermissaoMixin):
             obj.save()
             form.save_m2m()
             depois = auditoria.fotografar(obj, campos)
-            mudancas = auditoria.comparar(modelo, antes, depois)
+            mudancas = self.mudancas_para_trilha(obj, auditoria.comparar(modelo, antes, depois))
             if mudancas:
                 auditoria.registrar(
                     self.request, auditoria.Acao.ALTEROU, obj,
@@ -191,6 +208,10 @@ class EditarComAuditoriaMixin(FormularioPorPermissaoMixin):
 
     def preparar_objeto(self, obj, form):
         """Gancho para preencher campos que não vêm do formulário."""
+
+    def mudancas_para_trilha(self, obj, mudancas):
+        """Gancho para ajustar as mudanças antes de irem para a trilha (por exemplo, o tipo de dado)."""
+        return mudancas
 
     def depois_de_salvar(self, obj, form, criado):
         """Gancho para trabalho extra na mesma transação."""
@@ -232,7 +253,10 @@ class EditarComAuditoriaMixin(FormularioPorPermissaoMixin):
                     dados.pop(nome, None)
             else:
                 dados[nome] = "" if valor is None else str(valor)
-        novo_form = self.get_form_class()(data=dados, files=self.request.FILES, instance=self.object)
+        kwargs = self.get_form_kwargs()
+        kwargs["data"] = dados
+        kwargs["instance"] = self.object
+        novo_form = self.get_form_class()(**kwargs)
         novo_form.is_valid()
         return self.render_to_response(self.get_context_data(
             form=novo_form,

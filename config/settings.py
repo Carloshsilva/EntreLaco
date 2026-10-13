@@ -24,9 +24,11 @@ def env_lista(nome, padrao=""):
 DEBUG = env_bool("DJANGO_DEBUG", False)
 # `manage.py test` roda sem precisar de chave nem de collectstatic.
 RODANDO_TESTES = len(sys.argv) > 1 and sys.argv[1] == "test"
+# Verificações locais também rodam sem chave (nenhuma delas assina nada).
+COMANDO_SEM_CHAVE = len(sys.argv) > 1 and sys.argv[1] in {"test", "check", "makemigrations", "showmigrations"}
 SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
 if not SECRET_KEY:
-    if DEBUG or RODANDO_TESTES:
+    if DEBUG or COMANDO_SEM_CHAVE:
         SECRET_KEY = "dev-inseguro-apenas-local"
     else:
         raise RuntimeError("Defina DJANGO_SECRET_KEY fora do modo de desenvolvimento.")

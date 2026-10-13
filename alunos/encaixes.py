@@ -18,7 +18,7 @@ from .pendencias import pendencias_de_alunos
 from .secoes import contexto_da_ficha, contexto_da_situacao, contexto_do_historico, contexto_dos_responsaveis
 
 registrar_menu(ItemDeMenu("Alunos", "alunos:lista", "alunos", ordem=20, principal=True, grupo="identificacao", ativo_em=("alunos:",)))
-registrar_menu(ItemDeMenu("Ordem de atendimento", "alunos:fila", "fila", ordem=25, grupo="aulas", ativo_em=("alunos:fila",)))
+registrar_menu(ItemDeMenu("Ordem de atendimento", "alunos:fila", "fila", ordem=25, grupos=("identificacao", "aulas"), ativo_em=("alunos:fila",)))
 
 registrar_secao_do_aluno(SecaoDoAluno(
     chave="ficha", titulo="Ficha", template="alunos/_secao_ficha.html",
