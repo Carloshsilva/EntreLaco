@@ -203,3 +203,5 @@ if RODANDO_TESTES:
     PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
     warnings.filterwarnings("ignore", message="No directory at", module="whitenoise.base")
     MEDIA_ROOT = BASE_DIR / ".privado-testes"
+    # Os 403 e 404 esperados nos testes não precisam encher a saída de traceback.
+    LOGGING["loggers"] = {"django.request": {"level": "ERROR"}, "django.security": {"level": "ERROR"}}

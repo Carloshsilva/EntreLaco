@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{% if object %}Editar componente{% else %}Cadastrar componente{% endif %}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'equipe:componentes' %}">{% icone "seta-voltar" %}Componentes curriculares</a></p>
+    <h1 class="el-display">{% if object %}Editar o componente {{ object.nome }}{% else %}Cadastrar componente{% endif %}</h1>
+  </div>
+</header>
+{% url 'equipe:componentes' as url_componentes %}
+{% include "core/_formulario.html" with botao="Salvar componente" cancelar=url_componentes %}
+{% if object %}
+<section class="el-section" aria-labelledby="titulo-historico">
+  <h2 id="titulo-historico" class="el-heading">Histórico do componente</h2>
+  <div class="el-card">{% include "core/_trilha.html" with eventos=eventos %}</div>
+</section>
+{% endif %}
+{% endblock %}

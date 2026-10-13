@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Papéis e permissões{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'equipe:configuracao' %}">{% icone "seta-voltar" %}Configuração</a></p>
+    <h1 class="el-display">Papéis e permissões</h1>
+    <p class="el-muted">Cada papel diz o que a pessoa vê e edita em cada tipo de dado. Papel com pessoas não pode ser apagado.</p>
+  </div>
+  <div class="el-pagehead-actions">
+    <a class="el-btn el-btn-primary" href="{% url 'equipe:papel_novo' %}">{% icone "mais" %}Criar papel</a>
+  </div>
+</header>
+{% if papeis %}
+<div class="el-table-wrap">
+  <table class="el-table el-table-stack">
+    <caption class="el-sr-only">Papéis do serviço</caption>
+    <thead>
+      <tr>
+        <th scope="col">Papel</th>
+        <th scope="col">Pessoas com acesso</th>
+        <th scope="col">Configura o serviço</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for papel in papeis %}
+      <tr>
+        <th scope="row">
+          <a href="{% url 'equipe:papel_editar' papel.pk %}">{{ papel.nome }}</a>
+          {% if papel.descricao %}<p class="el-caption">{{ papel.descricao }}</p>{% endif %}
+        </th>
+        <td data-label="Pessoas com acesso">{{ papel.pessoas }}</td>
+        <td data-label="Configura o serviço">{% if papel.pode_configurar %}<span class="el-badge el-badge-laco">{% icone "seguranca" %}Sim</span>{% else %}Não{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="el-empty">{% icone "seguranca" "el-icon-lg" %}<p>Nenhum papel ainda. Crie o primeiro.</p></div>
+{% endif %}
+{% endblock %}

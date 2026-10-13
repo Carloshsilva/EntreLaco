@@ -1,0 +1,37 @@
+{% load entrelaco escolas_extras %}{# Seção "Escola de origem" do perfil do aluno. Recebe `dados` (escolas.encaixes.secao_escola_do_aluno), `aluno`, `acesso`. #}
+<dl class="el-dl el-dl-cols">
+  <div>
+    <dt>Escola de origem</dt>
+    <dd>
+      {% if dados.escola %}
+      {% if dados.ve_contato %}<a href="{% url 'escolas:detalhe' dados.escola.pk %}">{{ dados.escola.nome }}</a>{% else %}{{ dados.escola.nome }}{% endif %}
+      <span class="el-caption el-escolas-linha">{{ dados.escola.municipio }}/{{ dados.escola.uf }} · INEP <span class="el-data">{{ dados.escola.codigo_inep }}</span></span>
+      {% elif dados.sem_matricula %}Sem matrícula
+      {% else %}Não informada{% endif %}
+    </dd>
+  </div>
+  <div><dt>Ano escolar</dt><dd>{{ dados.ano_escolar|default:"Não informado" }}</dd></div>
+  <div><dt>Turma</dt><dd>{{ dados.turma|default:"Não informada" }}</dd></div>
+  <div><dt>RA ou número de matrícula</dt><dd>{% if dados.ra %}<span class="el-data">{{ dados.ra }}</span>{% else %}Não informado{% endif %}</dd></div>
+</dl>
+{% if dados.escola and dados.ve_contato %}
+<div class="el-escolas-contato-aluno">
+  <div class="el-card-head">
+    <h3 class="el-label-text">Contato da escola</h3>
+    {% include "escolas/_selo_contato.html" with situacao=dados.contato.situacao %}
+  </div>
+  {% if dados.contato %}
+  <dl class="el-dl el-dl-cols">
+    <div><dt>Quem atende</dt><dd>{{ dados.contato.quem_atende|default:"Não informado" }}</dd></div>
+    <div><dt>E-mail</dt><dd>{% if dados.contato.email %}<a href="mailto:{{ dados.contato.email }}">{{ dados.contato.email }}</a>{% else %}Não informado{% endif %}</dd></div>
+    <div><dt>Telefone</dt><dd>{% if dados.contato.telefone %}<a href="tel:{{ dados.contato.telefone|link_de_telefone }}">{{ dados.contato.telefone }}</a>{% else %}Não informado{% endif %}</dd></div>
+    <div><dt>Confirmado em</dt><dd>{% if dados.contato.confirmado_em %}{{ dados.contato.confirmado_em|date:"d/m/Y" }}{% else %}Ainda não confirmado{% endif %}</dd></div>
+  </dl>
+  {% else %}
+  <p class="el-muted">O serviço ainda não tem o contato desta escola.</p>
+  {% endif %}
+  {% if acesso|pode_editar:"escola_contato" and dados.contato.situacao != "atualizado" %}
+  <p><a class="el-btn el-btn-secondary" href="{% url 'escolas:detalhe' dados.escola.pk %}">{% icone "telefone" %}Confirmar o contato da escola</a></p>
+  {% endif %}
+</div>
+{% endif %}

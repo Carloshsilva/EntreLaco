@@ -1,1 +1,28 @@
 /* Estilos próprios do módulo equipe. Use os tokens de tokens.css e o prefixo el-. */
+
+/* Grade de permissões do papel: um grupo de rádios por tipo de dado (RF-06, RF-07). */
+.el-grade-acessos { display: grid; gap: 0; }
+.el-grade-acessos-linha { border-top: 1px solid var(--line); padding: var(--space-3) 0; min-width: 0; }
+.el-grade-acessos-linha:first-child { border-top: 0; padding-top: 0; }
+.el-grade-acessos-linha:last-child { padding-bottom: 0; }
+@media (min-width: 600px) {
+  .el-grade-acessos .el-choices { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-2); }
+}
+
+/* Link de senha mostrado uma vez depois de cadastrar a pessoa. */
+.el-link-senha { border-color: var(--laco); border-width: 2px; }
+.el-link-senha h2 { display: flex; gap: var(--space-2); align-items: center; }
+.el-link-senha .el-control { overflow-wrap: anywhere; }
+.el-link-senha .el-alert { margin: 0; }
+
+/* E-mails longos quebram em vez de empurrar a tabela para o lado. */
+.el-tabela-equipe .el-equipe-email { overflow-wrap: anywhere; word-break: break-word; }
+
+/* Lista do que acontece ao desativar o acesso. */
+.el-desativar-efeitos { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-2); }
+
+/* Atalhos da configuração: o cartão inteiro é o alvo do toque. */
+.el-atalhos > li.el-card { padding: 0; }
+.el-atalhos .el-item-link { padding: var(--space-3) var(--space-4); min-height: 64px; border-radius: var(--radius-md); }
+.el-atalhos .el-item-link:focus-visible { box-shadow: var(--focus-ring); }
+.el-atalhos .el-item-link > .el-icon:first-child { color: var(--laco); }

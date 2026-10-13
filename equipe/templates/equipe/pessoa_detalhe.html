@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{{ pessoa.nome|default:pessoa.email }}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'equipe:pessoas' %}">{% icone "seta-voltar" %}Equipe</a></p>
+    <h1 class="el-display">{{ pessoa.nome|default:pessoa.email }}{% if a_si_mesmo %} <span class="el-caption">(você)</span>{% endif %}</h1>
+    <p class="el-cluster">
+      <span>{{ vinculo.papel.nome }}</span>
+      {% if ativa %}<span class="el-badge el-badge-success">{% icone "ok" %}Com acesso</span>{% else %}<span class="el-badge">{% icone "pausa" %}Acesso desativado</span>{% endif %}
+      {% if perfil %}<span class="el-badge el-badge-laco">{% icone "aula" %}Dá aula</span>{% endif %}
+    </p>
+  </div>
+  {% if pode_editar %}
+  <div class="el-pagehead-actions">
+    <a class="el-btn el-btn-secondary" href="{% url 'equipe:pessoa_editar' pessoa.pk %}">{% icone "editar" %}Editar dados</a>
+    {% if pode_reativar %}
+    <form method="post" action="{% url 'equipe:pessoa_reativar' pessoa.pk %}">
+      {% csrf_token %}<button type="submit" class="el-btn el-btn-secondary">{% icone "ok" %}Reativar acesso</button>
+    </form>
+    {% endif %}
+    {% if pode_desativar %}<a class="el-btn el-btn-danger" href="{% url 'equipe:pessoa_desativar' pessoa.pk %}">{% icone "pausa" %}Desativar acesso</a>{% endif %}
+  </div>
+  {% endif %}
+</header>
+
+{% if link %}
+<section class="el-card el-link-senha" aria-labelledby="titulo-link">
+  <h2 id="titulo-link" class="el-heading">{% icone "link" %}Link para {{ pessoa.get_short_name }} criar a senha</h2>
+  <p>Copie o link e mande para {{ pessoa.get_short_name }} pelo WhatsApp de trabalho{% if pessoa.whatsapp_trabalho %} ({{ pessoa.whatsapp_trabalho }}){% endif %}. Ele vale por {{ horas }} hora{{ horas|pluralize:"s" }} e serve uma vez só.</p>
+  <div class="el-field">
+    <label class="el-label" for="link-senha">Link para criar a senha</label>
+    <input class="el-control el-data" type="text" id="link-senha" value="{{ link.link }}" readonly data-selecionar-tudo>
+  </div>
+  <div class="el-actions">
+    <button type="button" class="el-btn el-btn-primary" data-copiar="link-senha" data-aviso="aviso-copia" hidden>{% icone "link" %}Copiar link</button>
+  </div>
+  <p id="aviso-copia" class="el-caption" role="status"></p>
+  {% if link.email_enviado %}
+  <p class="el-alert el-alert-info">{% icone "email" %}<span>O mesmo link também foi mandado para {{ pessoa.email }}.</span></p>
+  {% else %}
+  <p class="el-alert el-alert-warning">{% icone "alerta" %}<span>Não deu para mandar o link por e-mail agora. Mande pelo WhatsApp de trabalho.</span></p>
+  {% endif %}
+  <p class="el-muted">Este link aparece só agora. Se você sair desta tela sem copiar, gere um novo link.</p>
+</section>
+{% endif %}
+
+<section class="el-card" aria-labelledby="titulo-dados">
+  <h2 id="titulo-dados" class="el-heading">Dados</h2>
+  <dl class="el-dl el-dl-cols">
+    <div><dt>E-mail de acesso</dt><dd>{{ pessoa.email }}</dd></div>
+    <div><dt>WhatsApp de trabalho</dt><dd>{{ pessoa.whatsapp_trabalho|default:"Não informado" }}</dd></div>
+    <div><dt>Papel</dt><dd>{{ vinculo.papel.nome }}{% if vinculo.papel.descricao %}<br><span class="el-caption">{{ vinculo.papel.descricao }}</span>{% endif %}</dd></div>
+    <div><dt>Situação</dt><dd>{% if ativa %}Com acesso ao serviço{% elif not vinculo.ativo %}Acesso ao serviço desativado{% else %}Login desativado{% endif %}</dd></div>
+    <div><dt>Na equipe desde</dt><dd>{{ vinculo.criado_em|date:"d/m/Y" }}</dd></div>
+    <div><dt>Último acesso</dt><dd>{% if pessoa.last_login %}{{ pessoa.last_login|date:"d/m/Y \à\s H:i" }}{% else %}Ainda não entrou{% endif %}</dd></div>
+    <div><dt>Senha</dt><dd>{% if senha_criada %}Criada{% else %}Ainda não criou a senha{% endif %}</dd></div>
+  </dl>
+  {% if pode_gerar_link %}
+  <form class="el-actions" method="post" action="{% url 'equipe:pessoa_link_senha' pessoa.pk %}">
+    {% csrf_token %}
+    <button type="submit" class="el-btn el-btn-secondary">{% icone "chave" %}Gerar novo link de senha</button>
+  </form>
+  {% elif pode_editar and ativa and tem_outro_servico and not a_si_mesmo %}
+  <p class="el-muted">Esta pessoa também tem acesso por outro serviço. Para criar uma senha nova, ela usa “Esqueci a senha”, na tela de entrar.</p>
+  {% endif %}
+</section>
+
+<section class="el-card" aria-labelledby="titulo-professor">
+  <div class="el-card-head">
+    <h2 id="titulo-professor" class="el-heading">Perfil de professor</h2>
+    {% if ativa %}<a class="el-btn el-btn-quiet" href="{% url 'agenda' %}?pessoa={{ pessoa.pk }}">{% icone "agenda" %}Ver agenda</a>{% endif %}
+  </div>
+  {% if perfil %}
+  <dl class="el-dl">
+    <div><dt>O que ensina</dt><dd>{% for c in componentes %}{{ c.nome }}{% if not c.ativo %} (componente inativo){% endif %}{% if not forloop.last %}, {% endif %}{% empty %}Nenhum componente marcado{% endfor %}</dd></div>
+    <div><dt>Etapas</dt><dd>{{ perfil.etapas|join:", "|default:"Nenhuma etapa marcada" }}</dd></div>
+    {% if perfil.observacoes %}<div><dt>Observações</dt><dd class="el-prose">{{ perfil.observacoes }}</dd></div>{% endif %}
+  </dl>
+  <div class="el-actions"><a class="el-btn el-btn-secondary" href="{% url 'equipe:professor' pessoa.pk %}">{% icone "editar" %}Editar perfil de professor</a></div>
+  {% else %}
+  <p class="el-muted">Sem perfil de professor. Cadastre se a pessoa dá aula: o perfil diz o que ela ensina e em que etapas.</p>
+  <div class="el-actions"><a class="el-btn el-btn-secondary" href="{% url 'equipe:professor' pessoa.pk %}">{% icone "mais" %}Cadastrar perfil de professor</a></div>
+  {% endif %}
+</section>
+
+<section class="el-section" aria-labelledby="titulo-historico">
+  <h2 id="titulo-historico" class="el-heading">Histórico</h2>
+  <div class="el-card">{% include "core/_trilha.html" with eventos=eventos %}</div>
+</section>
+{% endblock %}

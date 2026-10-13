@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Escolas{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <h1 class="el-display">Escolas</h1>
+    <p class="el-muted">Base de escolas de origem, comum a todos os serviços. O contato de cada escola é só de {{ servico_atual.nome }}.</p>
+  </div>
+  {% if acesso|pode_editar:"escola_contato" %}
+  <div class="el-pagehead-actions">
+    <a class="el-btn el-btn-secondary" href="{% url 'escolas:nova' %}">{% icone "mais" %}Cadastrar escola</a>
+  </div>
+  {% endif %}
+</header>
+
+<form class="el-filters" method="get" action="{% url 'escolas:lista' %}" role="search" aria-label="Escolas">
+  <div class="el-field el-search">
+    <label class="el-label" for="busca-escola">Buscar por nome, INEP ou município</label>
+    {% icone "buscar" %}
+    <input class="el-control" type="search" id="busca-escola" name="q" value="{{ q }}" maxlength="100" autocomplete="off" spellcheck="false"
+           hx-get="{% url 'escolas:lista' %}" hx-trigger="input changed delay:300ms, search" hx-target="#resultados" hx-push-url="true" hx-include="closest form">
+  </div>
+  <fieldset class="el-field el-fieldset-plain el-escolas-filtros">
+    <legend class="el-label">Mostrar só</legend>
+    <div class="el-escolas-opcoes">
+      {% if ve_alunos %}
+      <div class="el-check-row">
+        <input class="el-check" type="checkbox" id="filtro-com-alunos" name="com_alunos" value="1"{% if com_alunos %} checked{% endif %}
+               hx-get="{% url 'escolas:lista' %}" hx-trigger="change" hx-target="#resultados" hx-push-url="true" hx-include="closest form">
+        <label class="el-label" for="filtro-com-alunos">Escolas com alunos ativos</label>
+      </div>
+      {% endif %}
+      <div class="el-check-row">
+        <input class="el-check" type="checkbox" id="filtro-precisa" name="precisa" value="1"{% if precisa %} checked{% endif %}
+               hx-get="{% url 'escolas:lista' %}" hx-trigger="change" hx-target="#resultados" hx-push-url="true" hx-include="closest form">
+        <label class="el-label" for="filtro-precisa">Contato a atualizar ou sem contato</label>
+      </div>
+    </div>
+  </fieldset>
+  <button type="submit" class="el-btn el-btn-secondary">{% icone "buscar" %}Buscar</button>
+</form>
+
+<div id="resultados" aria-live="polite">
+  {% include "escolas/_resultados.html" %}
+</div>
+{% endblock %}

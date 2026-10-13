@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load entrelaco escolas_extras %}
+{% block titulo %}{{ escola.nome }}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'escolas:lista' %}">{% icone "seta-voltar" %}Escolas</a></p>
+    <h1 class="el-display">{{ escola.nome }}</h1>
+    <p class="el-muted">{{ escola.municipio }}/{{ escola.uf }} · INEP <span class="el-data">{{ escola.codigo_inep }}</span></p>
+  </div>
+</header>
+
+{% if escola.funcionamento != "em_atividade" %}
+<div class="el-alert el-alert-warning">{% icone "alerta" %}<div><p>Pela base pública, esta escola está {{ escola.get_funcionamento_display|lower }}. Confira com a família se o aluno mudou de escola.</p></div></div>
+{% endif %}
+
+<section class="el-card" aria-labelledby="titulo-dados-publicos">
+  <h2 id="titulo-dados-publicos" class="el-heading">Dados públicos</h2>
+  <dl class="el-dl el-dl-cols">
+    <div><dt>Código INEP</dt><dd class="el-data">{{ escola.codigo_inep }}</dd></div>
+    <div><dt>Rede</dt><dd>{{ escola.get_rede_display|default:"Não informada" }}</dd></div>
+    <div>
+      <dt>Endereço</dt>
+      <dd>{% if escola.endereco %}{{ escola.endereco }}{% if escola.bairro %}, {{ escola.bairro }}{% endif %}<br>{% endif %}{{ escola.municipio }}/{{ escola.uf }}{% if escola.cep %} · CEP <span class="el-data">{{ escola.cep }}</span>{% endif %}</dd>
+    </div>
+    <div><dt>Telefone</dt><dd>{% if escola.telefone %}<a href="tel:{{ escola.telefone|link_de_telefone }}">{{ escola.telefone }}</a>{% else %}Não informado{% endif %}</dd></div>
+    <div>
+      <dt>Situação de funcionamento</dt>
+      <dd>{% if escola.funcionamento == "em_atividade" %}<span class="el-badge el-badge-success">{{ escola.get_funcionamento_display }}</span>{% elif escola.funcionamento == "paralisada" %}<span class="el-badge el-badge-fita">{{ escola.get_funcionamento_display }}</span>{% else %}<span class="el-badge el-badge-danger">{{ escola.get_funcionamento_display }}</span>{% endif %}</dd>
+    </div>
+    <div><dt>Fonte</dt><dd>{{ escola.fonte }}</dd></div>
+  </dl>
+  <p class="el-caption">Estes dados são comuns a todos os serviços.</p>
+</section>
+
+<section class="el-card" aria-labelledby="titulo-contato">
+  <div class="el-card-head">
+    <h2 id="titulo-contato" class="el-heading">Contato confirmado por {{ servico_atual.nome }}</h2>
+    {% include "escolas/_selo_contato.html" with situacao=contato.situacao %}
+  </div>
+  {% if contato %}
+  <dl class="el-dl el-dl-cols">
+    <div><dt>Quem atende</dt><dd>{{ contato.quem_atende|default:"Não informado" }}</dd></div>
+    <div><dt>E-mail</dt><dd>{% if contato.email %}<a href="mailto:{{ contato.email }}">{{ contato.email }}</a>{% else %}Não informado{% endif %}</dd></div>
+    <div><dt>Telefone</dt><dd>{% if contato.telefone %}<a href="tel:{{ contato.telefone|link_de_telefone }}">{{ contato.telefone }}</a>{% else %}Não informado{% endif %}</dd></div>
+    <div><dt>Confirmado em</dt><dd>{% if contato.confirmado_em %}{{ contato.confirmado_em|date:"d/m/Y" }}{% if contato.confirmado_por %}, por {{ contato.confirmado_por.nome }}{% endif %}{% else %}Ainda não confirmado{% endif %}</dd></div>
+    {% if contato.observacoes %}<div class="el-escolas-dl-inteira"><dt>Observações</dt><dd class="el-prose">{{ contato.observacoes }}</dd></div>{% endif %}
+  </dl>
+  {% else %}
+  <p>{{ servico_atual.nome }} ainda não tem o contato desta escola.{% if acesso|pode_editar:"escola_contato" %} Ligue para o telefone público, pergunte o e-mail e quem atende, e cadastre o contato.{% endif %}</p>
+  {% endif %}
+  {% if acesso|pode_editar:"escola_contato" %}
+  <div class="el-actions">
+    {% if contato %}
+    <form method="post" action="{% url 'escolas:confirmar_contato' escola.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="el-btn {% if contato.situacao == 'atualizado' %}el-btn-secondary{% else %}el-btn-primary{% endif %}" aria-describedby="dica-confirmar">{% icone "check" %}Confirmar contato</button>
+    </form>
+    <a class="el-btn el-btn-secondary" href="{% url 'escolas:contato' escola.pk %}">{% icone "editar" %}Editar contato</a>
+    {% else %}
+    <a class="el-btn el-btn-primary" href="{% url 'escolas:contato' escola.pk %}">{% icone "mais" %}Cadastrar contato</a>
+    {% endif %}
+  </div>
+  {% if contato %}<p class="el-hint" id="dica-confirmar">Confirme depois de falar com a escola e conferir quem atende, o e-mail e o telefone. Se algo mudou, edite o contato.</p>{% endif %}
+  {% endif %}
+  <p class="el-caption">Os outros serviços não veem este contato.</p>
+</section>
+
+{% if alunos is not None %}
+<section class="el-card" aria-labelledby="titulo-alunos">
+  <h2 id="titulo-alunos" class="el-heading">Alunos ativos do serviço nesta escola</h2>
+  {% if alunos %}
+  <ul class="el-list-plain">
+    {% for aluno in alunos %}
+    <li>
+      <a class="el-item-link" href="{% url 'alunos:detalhe' aluno.pk %}">
+        <span class="el-item-main">
+          <span class="el-item-title">{{ aluno.nome_curto }}</span>
+          {% if aluno.ano_escolar or aluno.turma %}<span class="el-item-meta">{{ aluno.get_ano_escolar_display }}{% if aluno.ano_escolar and aluno.turma %} · {% endif %}{% if aluno.turma %}turma {{ aluno.turma }}{% endif %}</span>{% endif %}
+        </span>
+        {% icone "avancar" %}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="el-muted">Nenhum aluno ativo do serviço tem esta escola como escola de origem.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="el-card" aria-labelledby="titulo-historico">
+  <h2 id="titulo-historico" class="el-heading">Histórico no serviço</h2>
+  {% include "core/_trilha.html" with eventos=eventos %}
+</section>
+{% endblock %}

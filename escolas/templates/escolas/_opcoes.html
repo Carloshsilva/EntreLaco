@@ -1,0 +1,7 @@
+{# Opções de escola para campos de busca em outros formulários (escolas:buscar). Só dados públicos da base comum. #}
+{% if formato == "datalist" %}{% for escola in escolas %}<option value="{{ escola.codigo_inep }} · {{ escola.nome }} ({{ escola.municipio }}/{{ escola.uf }})"></option>
+{% endfor %}{% else %}{% if curta %}<option value="">Digite pelo menos 3 letras do nome, o município ou o código INEP</option>
+{% elif escolas %}<option value="">Escolha a escola ({{ escolas|length }} encontrada{{ escolas|length|pluralize:"s" }})</option>
+{% for escola in escolas %}<option value="{{ escola.pk }}">{{ escola.nome }} · {{ escola.municipio }}/{{ escola.uf }} · INEP {{ escola.codigo_inep }}{% if escola.funcionamento != "em_atividade" %} ({{ escola.get_funcionamento_display|lower }}){% endif %}</option>
+{% endfor %}{% else %}<option value="">Nenhuma escola encontrada. Confira o nome ou busque pelo código INEP</option>
+{% endif %}{% endif %}

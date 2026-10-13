@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Perfil de professor{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    {% if acesso|tem_acao:"gerir_equipe" %}
+    <p class="el-breadcrumb"><a href="{% url 'equipe:pessoa_detalhe' pessoa.pk %}">{% icone "seta-voltar" %}{{ pessoa.nome|default:pessoa.email }}</a></p>
+    {% else %}
+    <p class="el-breadcrumb"><a href="{% url 'minha_conta' %}">{% icone "seta-voltar" %}Minha conta</a></p>
+    {% endif %}
+    <h1 class="el-display">{% if object %}Editar perfil de professor{% else %}Cadastrar perfil de professor{% endif %}</h1>
+    <p class="el-muted">{% if a_si_mesmo %}O que você ensina e em que etapas dá aula.{% else %}O que {{ pessoa.nome }} ensina e em que etapas dá aula.{% endif %} As aulas marcadas aparecem na agenda.</p>
+  </div>
+</header>
+{% include "core/_formulario.html" with botao="Salvar perfil" cancelar=cancelar secoes=secoes %}
+{% endblock %}

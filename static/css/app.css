@@ -254,9 +254,12 @@ select[multiple].el-control { min-height: 160px; }
 /* Busca e filtros */
 .el-filters { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-end; }
 .el-filters .el-field { flex: 1 1 200px; max-width: 420px; }
-.el-search { position: relative; flex: 2 1 260px; }
+.el-search { flex: 2 1 260px; }
 .el-search .el-control { padding-left: 44px; }
-.el-search .el-icon { position: absolute; left: var(--space-3); top: calc(20px + var(--space-2) + 14px); color: var(--ink-muted); pointer-events: none; }
+.el-search-box { position: relative; }
+.el-search-box .el-icon { position: absolute; left: var(--space-3); top: 50%; transform: translateY(-50%); color: var(--ink-muted); pointer-events: none; }
+/* Ícone entre o rótulo e o campo, dentro de .el-search: fica sobre o campo, qualquer que seja a altura do rótulo. */
+.el-search > .el-icon { position: relative; z-index: 1; margin: 0 0 calc(-20px - var(--space-2)) var(--space-3); transform: translateY(14px); color: var(--ink-muted); pointer-events: none; }
 
 /* ---------- Selos ---------- */
 .el-badge {

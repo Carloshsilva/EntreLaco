@@ -1,0 +1,12 @@
+{% autoescape off %}Olá, {{ pessoa.get_short_name }}.
+
+{% if novo %}{{ quem.nome }}, de {{ servico.nome }}, gerou um link novo para você criar a sua senha na EntreLaço.{% else %}{{ quem.nome }} cadastrou você na equipe de {{ servico.nome }} na EntreLaço.{% endif %}
+
+Para criar a senha, abra este link (vale por {{ horas }} hora{{ horas|pluralize:"s" }} e serve uma vez só):
+{{ link }}
+
+Depois, entre com este e-mail ({{ pessoa.email }}) e a senha que você criou.
+Se o link vencer, peça um novo para quem cuida da equipe.
+
+EntreLaço
+{% endautoescape %}

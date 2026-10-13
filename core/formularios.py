@@ -52,6 +52,10 @@ class MotivoDaAlteracaoMixin(forms.Form):
         max_length=500,
         help_text="Fica registrado na trilha de auditoria. Exemplo: “a família corrigiu o telefone”.",
         widget=forms.Textarea(attrs={"rows": 2}),
+        error_messages={
+            "required": "Conte por que você está alterando, por exemplo “a família corrigiu o telefone”. "
+                        "O motivo fica na trilha de auditoria.",
+        },
     )
 
 

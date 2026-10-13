@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Equipe{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <h1 class="el-display">Equipe</h1>
+    <p class="el-muted">Pessoas com acesso a {{ servico_atual.nome }}. Cada pessoa entra com o próprio e-mail e senha.</p>
+  </div>
+  <div class="el-pagehead-actions">
+    <a class="el-btn el-btn-primary" href="{% url 'equipe:pessoa_nova' %}">{% icone "nova-pessoa" %}Cadastrar pessoa</a>
+  </div>
+</header>
+
+<form class="el-filters" method="get" action="{% url 'equipe:pessoas' %}" role="search" aria-label="Buscar na equipe">
+  <div class="el-field el-search">
+    <label class="el-label" for="busca-pessoas">Buscar por nome ou e-mail</label>
+    {% icone "buscar" %}
+    <input class="el-control" type="search" id="busca-pessoas" name="q" value="{{ busca }}" autocomplete="off"
+           hx-get="{% url 'equipe:pessoas' %}" hx-trigger="input changed delay:300ms, search" hx-target="#resultados"
+           hx-push-url="true" hx-include="closest form">
+  </div>
+  <div class="el-field">
+    <label class="el-label" for="filtro-situacao">Situação</label>
+    <select class="el-control" id="filtro-situacao" name="situacao"
+            hx-get="{% url 'equipe:pessoas' %}" hx-trigger="change" hx-target="#resultados" hx-push-url="true" hx-include="closest form">
+      {% for valor, rotulo in situacoes %}<option value="{{ valor }}"{% if situacao == valor %} selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="el-field">
+    <label class="el-label" for="filtro-papel">Papel</label>
+    <select class="el-control" id="filtro-papel" name="papel"
+            hx-get="{% url 'equipe:pessoas' %}" hx-trigger="change" hx-target="#resultados" hx-push-url="true" hx-include="closest form">
+      <option value="">Todos os papéis</option>
+      {% for p in papeis %}<option value="{{ p.pk }}"{% if papel == p.pk|stringformat:"s" %} selected{% endif %}>{{ p.nome }}</option>{% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="el-btn el-btn-secondary">{% icone "buscar" %}Buscar</button>
+</form>
+
+<div id="resultados" aria-live="polite">
+  {% include "equipe/_pessoas_resultados.html" %}
+</div>
+{% endblock %}

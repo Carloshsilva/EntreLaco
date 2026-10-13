@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Desativar acesso{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'equipe:pessoa_detalhe' pessoa.pk %}">{% icone "seta-voltar" %}{{ pessoa.nome|default:pessoa.email }}</a></p>
+    <h1 class="el-display">Desativar o acesso de {{ pessoa.nome|default:pessoa.email }}</h1>
+  </div>
+</header>
+<section class="el-card" aria-labelledby="titulo-efeitos">
+  <h2 id="titulo-efeitos" class="el-heading">O que acontece</h2>
+  <ul class="el-desativar-efeitos">
+    {% if outro_vinculo_ativo %}
+    <li>A pessoa deixa de ver {{ servico_atual.nome }}. Ela continua com acesso aos outros serviços em que trabalha.</li>
+    {% else %}
+    <li>A pessoa não consegue mais entrar na EntreLaço, e as sessões que ela tem abertas, em qualquer aparelho, são encerradas na hora.</li>
+    {% endif %}
+    <li>O cadastro dela e tudo o que ela registrou continuam guardados, com a trilha de auditoria.</li>
+    <li>Dá para reativar depois, na tela da pessoa. Ela volta com o mesmo papel e a mesma senha.</li>
+  </ul>
+</section>
+<form class="el-form" method="post" novalidate>
+  {% csrf_token %}
+  {% include "core/_erros_do_formulario.html" %}
+  {% include "core/_campo.html" with campo=form.motivo %}
+  <div class="el-actions el-actions-sticky">
+    <button type="submit" class="el-btn el-btn-danger">{% icone "pausa" %}Desativar acesso</button>
+    <a class="el-btn el-btn-secondary" href="{% url 'equipe:pessoa_detalhe' pessoa.pk %}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

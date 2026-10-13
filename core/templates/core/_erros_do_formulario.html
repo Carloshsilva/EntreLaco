@@ -3,7 +3,7 @@
   <h2>{% if form.errors|length == 1 %}Falta corrigir 1 ponto para salvar{% else %}Falta corrigir {{ form.errors|length }} pontos para salvar{% endif %}</h2>
   <ul>
     {% for erro in form.non_field_errors %}<li>{{ erro }}</li>{% endfor %}
-    {% for campo in form %}{% for erro in campo.errors %}<li><a href="#{{ campo.id_for_label }}">{{ campo.label }}: {{ erro }}</a></li>{% endfor %}{% endfor %}
+    {% for campo in form %}{% for erro in campo.errors %}<li><a href="#{% if campo.id_for_label %}{{ campo.id_for_label }}{% else %}{{ campo.auto_id }}_0{% endif %}">{{ campo.label }}: {{ erro }}</a></li>{% endfor %}{% endfor %}
   </ul>
 </div>
 {% endif %}

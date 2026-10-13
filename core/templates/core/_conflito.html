@@ -1,7 +1,7 @@
 {% load entrelaco %}
 <section class="el-conflict" aria-labelledby="titulo-conflito">
   <h2 id="titulo-conflito">{% icone "alerta" %}Outra pessoa salvou este cadastro enquanto você editava</h2>
-  <p>{% if conflito_autor %}{{ conflito_autor.nome_curto }} salvou{% else %}Alguém salvou{% endif %}{% if conflito_quando %} às {{ conflito_quando|date:"H:i" }}{% endif %}. Nada do que você enviou foi salvo ainda. Nos campos abaixo, vocês duas mudaram o mesmo dado: escolha o valor de cada um e salve de novo.</p>
+  <p>{% if conflito_autor %}{{ conflito_autor.nome_curto }} salvou{% else %}Alguém salvou{% endif %}{% if conflito_quando %} às {{ conflito_quando|date:"H:i" }}{% endif %}. Nada do que você enviou foi salvo ainda. Nos campos abaixo, as duas pessoas mudaram o mesmo dado: escolha o valor de cada um e salve de novo.</p>
   <ul class="el-conflict-list">
     {% for c in conflitos %}
     <li class="el-conflict-item">
