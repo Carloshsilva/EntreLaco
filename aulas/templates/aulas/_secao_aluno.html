@@ -1,0 +1,63 @@
+{% load entrelaco %}{# Seção "Aulas" do perfil do aluno. O perfil já põe o título (h2); aqui dentro, h3. Recebe `dados`, `aluno` e `acesso`. #}
+<div class="el-aulas-secao">
+  <div class="el-card-head">
+    <p class="el-aulas-total">{{ dados.resumo }}</p>
+    {% if dados.pode_registrar %}
+    <div class="el-cluster">
+      <a class="el-btn el-btn-secondary" href="{{ dados.url_registrar }}">{% icone "aula" %}Registrar aula</a>
+      <a class="el-btn el-btn-secondary" href="{{ dados.url_marcar }}">{% icone "calendario" %}Marcar aula</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <h3 class="el-label-text">Próximas aulas marcadas</h3>
+  {% if dados.proximas %}
+  <ul class="el-list-plain">
+    {% for aula in dados.proximas %}
+    <li>
+      <a class="el-item-link" href="{% url 'aulas:detalhe' aula.pk %}">
+        {% icone "calendario" %}
+        <span class="el-item-main">
+          <span class="el-item-title">{{ aula.data|date:"l, d/m"|capfirst }}{% if aula.hora_inicio %} às {{ aula.hora_inicio|time:"H:i" }}{% endif %}</span>
+          <span class="el-item-meta">Com {{ aula.professor.nome_curto }} · {{ aula.duracao_minutos }} minutos</span>
+        </span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="el-muted">Nenhuma aula marcada.</p>
+  {% endif %}
+
+  <h3 class="el-label-text">Últimas aulas</h3>
+  {% if dados.ultimas %}
+  <div class="el-table-wrap">
+    <table class="el-table el-table-stack">
+      <caption class="el-sr-only">Últimas aulas de {{ aluno.nome_curto }}, da mais recente para a mais antiga</caption>
+      <thead>
+        <tr>
+          <th scope="col">Data</th>
+          <th scope="col">Professor(a)</th>
+          <th scope="col">Componentes</th>
+          <th scope="col">O que foi trabalhado</th>
+          <th scope="col">Situação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for aula in dados.ultimas %}
+        <tr>
+          <th scope="row"><a href="{% url 'aulas:detalhe' aula.pk %}"><span class="el-sr-only">Aula de </span>{{ aula.data|date:"d/m/Y" }}</a></th>
+          <td data-label="Professor(a)">{{ aula.professor.nome_curto }}</td>
+          <td data-label="Componentes">{% for c in aula.componentes.all %}{{ c.nome }}{% if not forloop.last %}, {% endif %}{% empty %}Nenhum marcado{% endfor %}</td>
+          <td data-label="O que foi trabalhado">{% if aula.situacao == "nao_realizada" %}{{ aula.motivo_nao_realizada|default:"Não aconteceu"|truncatechars:120 }}{% elif aula.falta_registrar %}Falta registrar{% else %}{{ aula.conteudo|default:"Não preenchido"|truncatechars:120 }}{% endif %}</td>
+          <td data-label="Situação">{% include "aulas/_situacao.html" %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p><a href="{{ dados.url_lista }}">Ver todas as aulas de {{ aluno.nome_curto }}</a></p>
+  {% else %}
+  <p class="el-muted">Nenhuma aula registrada ainda.</p>
+  {% endif %}
+</div>

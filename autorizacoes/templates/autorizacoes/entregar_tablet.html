@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Assinatura no tablet{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{{ url_voltar }}">{% icone "seta-voltar" %}{% if retomar %}Comprovante{% else %}{{ aluno.nome_curto }}{% endif %}</a></p>
+    <h1 class="el-display">Assinatura no tablet</h1>
+    <p class="el-muted">{{ aluno.nome_curto }} · {{ tipo_rotulo }}</p>
+  </div>
+</header>
+
+<div class="el-alert el-alert-info">
+  {% icone "assinatura" %}
+  <div>
+    <p class="el-autorizacoes-destaque">Entregue o tablet ao responsável. Ao terminar, a plataforma pede o seu login de novo.</p>
+    <p>Enquanto ele lê e assina, o tablet mostra só o termo “{{ termo.titulo }}” (versão {{ termo.versao_do_termo }}) e o primeiro nome do aluno. Nada mais da plataforma aparece.</p>
+  </div>
+</div>
+
+<section class="el-card" aria-labelledby="titulo-antes">
+  <h2 id="titulo-antes" class="el-heading">Antes de entregar</h2>
+  <ul class="el-autorizacoes-passos">
+    <li>Quem autoriza é o responsável legal pela criança.</li>
+    <li>Se ele não consegue assinar com o dedo, você pode confirmar na própria tela que ele autorizou em voz alta.</li>
+    <li>Se for preciso parar, toque em “Cancelar e devolver o tablet”, no fim da tela: a autorização fica pendente.</li>
+  </ul>
+</section>
+
+<form class="el-form" method="post" action="{{ acao }}" hx-boost="false" novalidate>
+  {% csrf_token %}
+  {% if retomar %}<input type="hidden" name="acao" value="comecar">{% else %}<input type="hidden" name="forma" value="tablet">{% endif %}
+  <div class="el-actions el-actions-sticky">
+    <button type="submit" class="el-btn el-btn-primary">{% icone "assinatura" %}Começar a assinatura</button>
+    {% if retomar %}<a class="el-btn el-btn-secondary" href="{{ url_voltar }}">Voltar ao comprovante</a>{% else %}<a class="el-btn el-btn-secondary" href="{{ acao }}">Escolher outra forma</a>{% endif %}
+  </div>
+</form>
+{% endblock %}

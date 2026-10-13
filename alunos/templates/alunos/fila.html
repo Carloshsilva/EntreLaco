@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Ordem de atendimento{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'alunos:lista' %}">{% icone "seta-voltar" %}Alunos</a></p>
+    <h1 class="el-display">Ordem de atendimento</h1>
+    <p class="el-muted">{% if usar_risco %}Os alunos ativos aparecem nesta ordem: primeiro quem está há mais dias sem aula registrada (quem nunca teve aula vem antes de todos), depois quem tem a marca de risco de evasão, depois quem está internado há mais dias.{% else %}Os alunos ativos aparecem nesta ordem: primeiro quem está há mais dias sem aula registrada (quem nunca teve aula vem antes de todos), depois quem está internado há mais dias.{% endif %}</p>
+  </div>
+</header>
+
+{% if unidades %}
+<form class="el-filters" method="get" action="{% url 'alunos:fila' %}" aria-label="Filtro da ordem de atendimento">
+  <div class="el-field">
+    <label class="el-label" for="filtro-unidade">Unidade</label>
+    <select class="el-control" id="filtro-unidade" name="unidade"
+            hx-get="{% url 'alunos:fila' %}" hx-trigger="change" hx-target="#resultados" hx-push-url="true" hx-include="closest form">
+      <option value="">Todas as unidades</option>
+      {% for u in unidades %}<option value="{{ u }}"{% if u == unidade %} selected{% endif %}>{{ u }}</option>{% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="el-btn el-btn-secondary">Mostrar</button>
+</form>
+{% endif %}
+
+<div id="resultados" aria-live="polite">
+  {% include "alunos/_fila_resultados.html" %}
+</div>
+<p class="el-caption">Mudar a ordem à mão fica para uma próxima versão.</p>
+{% endblock %}

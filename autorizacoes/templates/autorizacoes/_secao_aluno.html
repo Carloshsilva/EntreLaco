@@ -1,0 +1,47 @@
+{% load entrelaco %}{# Seção "Autorizações da família" do perfil do aluno. Recebe `dados` (autorizacoes.secoes.contexto_das_autorizacoes), `aluno`, `acesso`. #}
+<div class="el-alert {% if dados.libera_contato %}el-alert-info{% else %}el-alert-warning{% endif %}">
+  {% if dados.libera_contato %}{% icone "info" %}{% else %}{% icone "alerta" %}{% endif %}
+  <div>
+    {% if dados.libera_contato %}
+    <p>Contato com a escola liberado{% if dados.contato_provisorio %} pelo sim provisório por WhatsApp, até o sim definitivo{% endif %}. Sem autorização de contato válida ou provisória, nada sai para a escola.</p>
+    {% else %}
+    <p>Contato com a escola não liberado. Sem autorização de contato válida ou provisória, nada sai para a escola sobre este aluno: nem carta, nem link, nem resumo.</p>
+    {% endif %}
+  </div>
+</div>
+<div class="el-autorizacoes-tipos">
+  {% for t in dados.tipos %}
+  <article class="el-autorizacoes-tipo" aria-labelledby="autorizacao-{{ t.codigo }}">
+    <div class="el-card-head">
+      <h3 id="autorizacao-{{ t.codigo }}" class="el-label-text">{{ t.rotulo }}</h3>
+      {% include "autorizacoes/_selo.html" with autorizacao=t.atual %}
+    </div>
+    {% if t.atual %}
+    <dl class="el-dl">
+      <div><dt>Forma</dt><dd>{{ t.atual.get_forma_display|default:"Sem forma ainda: a família vai decidir depois" }}</dd></div>
+      {% if t.atual.responsavel_nome %}<div><dt>Quem autorizou</dt><dd>{{ t.atual.responsavel_nome }}</dd></div>{% endif %}
+      <div><dt>Quem colheu</dt><dd>{{ t.atual.colhida_por.nome_curto|default:"Não informado" }}</dd></div>
+      <div><dt>Quando</dt><dd>{% if t.atual.colhida_em %}<time datetime="{{ t.atual.colhida_em|date:'c' }}">{{ t.atual.colhida_em|date:"d/m/Y \à\s H:i" }}</time>{% else %}Registrada em <time datetime="{{ t.atual.criado_em|date:'c' }}">{{ t.atual.criado_em|date:"d/m/Y" }}</time>, sem resposta ainda{% endif %}</dd></div>
+      {% if t.atual.revogada_em %}<div><dt>Revogada em</dt><dd><time datetime="{{ t.atual.revogada_em|date:'c' }}">{{ t.atual.revogada_em|date:"d/m/Y \à\s H:i" }}</time></dd></div>{% endif %}
+    </dl>
+    {% else %}
+    <p class="el-muted">A família ainda não respondeu a esta autorização.</p>
+    {% endif %}
+    {% if t.acoes %}
+    <div class="el-actions">
+      {% for a in t.acoes %}<a class="el-btn {{ a.classe }}" href="{{ a.url }}">{% icone a.icone %}{{ a.rotulo }}<span class="el-sr-only"> ({{ t.rotulo_minusculo }})</span></a>{% endfor %}
+    </div>
+    {% endif %}
+    {% if t.anteriores %}
+    <details class="el-autorizacoes-anteriores">
+      <summary>{{ t.anteriores|length }} coleta{{ t.anteriores|pluralize }} anterior{{ t.anteriores|pluralize:"es" }}, guardada{{ t.anteriores|pluralize }} como prova</summary>
+      <ul class="el-list-plain">
+        {% for c in t.anteriores %}
+        <li><a href="{% url 'autorizacoes:detalhe' c.pk %}">{{ c.get_situacao_display }}{% if c.forma %} · {{ c.get_forma_display }}{% endif %}</a> <span class="el-caption">{% if c.colhida_em %}{{ c.colhida_em|date:"d/m/Y" }}{% else %}{{ c.criado_em|date:"d/m/Y" }}{% endif %}{% if c.colhida_por %}, por {{ c.colhida_por.nome_curto }}{% endif %}</span></li>
+        {% endfor %}
+      </ul>
+    </details>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>

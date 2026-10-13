@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Autorização de {{ tipo_minusculo }}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'alunos:detalhe' aluno.pk %}#secao-autorizacoes">{% icone "seta-voltar" %}{{ aluno.nome_curto }}</a></p>
+    <h1 class="el-display">Autorização de {{ tipo_minusculo }}</h1>
+    <p class="el-muted">Comprovante da coleta · {{ aluno.nome_curto }}</p>
+  </div>
+  {% if pode_continuar or pode_colher or pode_revogar %}
+  <div class="el-pagehead-actions">
+    {% if pode_continuar %}<a class="el-btn el-btn-primary" href="{% url 'autorizacoes:assinar' autorizacao.pk %}">{% icone "assinatura" %}Continuar a assinatura no tablet</a>
+    {% elif pode_colher %}<a class="el-btn el-btn-primary" href="{% url 'autorizacoes:colher' aluno.pk autorizacao.tipo %}">{% icone "assinatura" %}{% if autorizacao.situacao == "provisoria" %}Colher o sim definitivo{% else %}Colher de novo{% endif %}</a>{% endif %}
+    {% if pode_revogar %}<a class="el-btn el-btn-danger" href="{% url 'autorizacoes:revogar' autorizacao.pk %}">{% icone "fechar" %}Registrar revogação</a>{% endif %}
+  </div>
+  {% endif %}
+</header>
+
+{% if not e_atual and atual %}
+<div class="el-alert el-alert-info">
+  {% icone "info" %}
+  <div><p>Esta coleta foi substituída por uma mais recente e continua guardada como prova. <a href="{% url 'autorizacoes:detalhe' atual.pk %}">Ver a autorização atual</a> ({{ atual.get_situacao_display|lower }}).</p></div>
+</div>
+{% endif %}
+
+<section class="el-card" aria-labelledby="titulo-situacao">
+  <div class="el-card-head">
+    <h2 id="titulo-situacao" class="el-heading">Situação</h2>
+    {% include "autorizacoes/_selo.html" with autorizacao=autorizacao %}
+  </div>
+  <dl class="el-dl el-dl-cols">
+    <div><dt>Tipo</dt><dd>{{ autorizacao.get_tipo_display }}</dd></div>
+    <div><dt>Situação</dt><dd>{{ autorizacao.get_situacao_display }}</dd></div>
+    <div><dt>Forma de coleta</dt><dd>{{ autorizacao.get_forma_display|default:"Sem forma ainda: a família vai decidir depois" }}</dd></div>
+    <div><dt>Quando</dt><dd>{% if autorizacao.colhida_em %}<time datetime="{{ autorizacao.colhida_em|date:'c' }}">{{ autorizacao.colhida_em|date:"d/m/Y \à\s H:i" }}</time>{% else %}Registrada em <time datetime="{{ autorizacao.criado_em|date:'c' }}">{{ autorizacao.criado_em|date:"d/m/Y \à\s H:i" }}</time>, sem resposta ainda{% endif %}</dd></div>
+    <div><dt>Quem colheu</dt><dd>{{ autorizacao.colhida_por.nome|default:"Não informado" }}</dd></div>
+    {% if autorizacao.revogada_em %}
+    <div><dt>Revogada em</dt><dd><time datetime="{{ autorizacao.revogada_em|date:'c' }}">{{ autorizacao.revogada_em|date:"d/m/Y \à\s H:i" }}</time></dd></div>
+    <div><dt>Como a família pediu a revogação</dt><dd>{{ autorizacao.revogacao_motivo }}</dd></div>
+    {% endif %}
+  </dl>
+  {% if autorizacao.situacao == "provisoria" %}<p class="el-muted">O sim por WhatsApp é provisório: libera o contato com a escola até o sim definitivo.</p>{% endif %}
+</section>
+
+<section class="el-card" aria-labelledby="titulo-quem">
+  <h2 id="titulo-quem" class="el-heading">Quem autorizou</h2>
+  {% if autorizacao.responsavel_nome %}
+  <dl class="el-dl el-dl-cols">
+    <div><dt>Nome</dt><dd>{{ autorizacao.responsavel_nome }}</dd></div>
+    <div><dt>Documento</dt><dd>{% if autorizacao.responsavel_documento %}<span class="el-data">{{ autorizacao.responsavel_documento }}</span>{% else %}Não informado{% endif %}</dd></div>
+    {% if autorizacao.responsavel %}<div><dt>No cadastro do aluno</dt><dd>{{ autorizacao.responsavel.get_parentesco_display }}{% if autorizacao.responsavel.responsavel_legal %}, responsável legal{% endif %}</dd></div>{% endif %}
+  </dl>
+  {% else %}
+  <p class="el-muted">Ainda não há resposta da família.</p>
+  {% endif %}
+</section>
+
+<section class="el-card" aria-labelledby="titulo-prova">
+  <h2 id="titulo-prova" class="el-heading">Prova da coleta</h2>
+  <dl class="el-dl">
+    <div>
+      <dt>Impressão digital (SHA-256)</dt>
+      <dd>
+        {% if autorizacao.impressao_digital %}
+        <span class="el-data el-autorizacoes-impressao">{{ autorizacao.impressao_digital }}</span>
+        {% if confere is True %}<p class="el-autorizacoes-confere">{% icone "ok" %}<span>Confere: {% if autorizacao.forma == "tablet" %}o termo, quem assinou, a resposta, a data e a assinatura{% else %}o arquivo{% endif %} não mudaram desde a coleta.</span></p>
+        {% elif confere is False %}<p class="el-error">{% icone "erro" %}<span>Não confere: algo mudou depois da coleta ou o arquivo não foi encontrado. Avise quem administra a plataforma.</span></p>{% endif %}
+        {% else %}Ainda não há: a impressão digital é gerada quando a família responde.{% endif %}
+      </dd>
+    </div>
+    {% if autorizacao.aparelho %}<div><dt>Aparelho usado</dt><dd class="el-caption">{{ autorizacao.aparelho }}</dd></div>{% endif %}
+    {% if autorizacao.observacoes %}<div><dt>Observações</dt><dd class="el-prose">{{ autorizacao.observacoes }}</dd></div>{% endif %}
+  </dl>
+  {% if autorizacao.assinatura %}
+  <figure class="el-autorizacoes-assinatura">
+    <img src="{% url 'autorizacoes:imagem_assinatura' autorizacao.pk %}" alt="Assinatura de {{ autorizacao.responsavel_nome|default:'quem autorizou' }} feita no tablet" width="480" height="160">
+    <figcaption class="el-caption">Assinatura feita com o dedo no tablet.</figcaption>
+  </figure>
+  {% endif %}
+  {% if autorizacao.arquivo %}
+  <p><a class="el-btn el-btn-secondary" href="{% url 'autorizacoes:arquivo' autorizacao.pk %}" hx-boost="false">{% if e_imagem %}{% icone "foto" %}{% else %}{% icone "baixar" %}{% endif %}{% if autorizacao.forma == "papel" %}Abrir a foto do papel assinado{% else %}Abrir a conversa do WhatsApp{% endif %}</a></p>
+  {% endif %}
+  <p class="el-caption">A lista final do que se guarda como prova de cada forma de coleta, o advogado confirma (LGPD-03).</p>
+</section>
+
+<section class="el-card" aria-labelledby="titulo-termo">
+  <h2 id="titulo-termo" class="el-heading">Termo que a família viu</h2>
+  {% if autorizacao.termo %}
+  <dl class="el-dl el-dl-cols">
+    <div><dt>Título</dt><dd>{% if acesso.configurar %}<a href="{% url 'autorizacoes:termo_detalhe' autorizacao.termo.pk %}">{{ autorizacao.termo.titulo }}</a>{% else %}{{ autorizacao.termo.titulo }}{% endif %}</dd></div>
+    <div><dt>Versão</dt><dd>{{ autorizacao.termo.versao_do_termo }}</dd></div>
+  </dl>
+  <details class="el-autorizacoes-termo">
+    <summary>Ler o texto do termo (versão {{ autorizacao.termo.versao_do_termo }})</summary>
+    <div class="el-prose">{{ autorizacao.termo.texto }}</div>
+  </details>
+  {% else %}
+  <p class="el-muted">Sem termo registrado.</p>
+  {% endif %}
+</section>
+
+<section class="el-card" aria-labelledby="titulo-historico">
+  <h2 id="titulo-historico" class="el-heading">Histórico</h2>
+  {% include "core/_trilha.html" with eventos=eventos %}
+</section>
+{% endblock %}

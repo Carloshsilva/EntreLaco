@@ -1,0 +1,33 @@
+{% load entrelaco %}{# Seção "Documentos" do perfil do aluno. Recebe `dados` (documentos.encaixes.secao_documentos_do_aluno), `aluno`, `acesso`. #}
+{% if dados.documentos %}
+<div class="el-table-wrap">
+  <table class="el-table el-table-stack">
+    <caption class="el-sr-only">Documentos digitalizados do aluno, do envio mais recente para o mais antigo</caption>
+    <thead>
+      <tr>
+        <th scope="col">Documento</th>
+        <th scope="col">Tipo</th>
+        <th scope="col">Data do documento</th>
+        <th scope="col">Digitalizado por</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for documento in dados.documentos %}
+      <tr>
+        <th scope="row"><a href="{% url 'documentos:detalhe' documento.pk %}">{{ documento.titulo }}</a></th>
+        <td data-label="Tipo">{{ documento.get_tipo_display }}</td>
+        <td data-label="Data do documento">{% if documento.data_documento %}{{ documento.data_documento|date:"d/m/Y" }}{% else %}Não informada{% endif %}</td>
+        <td data-label="Digitalizado por">{{ documento.criado_por.nome_curto|default:"Pessoa removida" }}, em {{ documento.criado_em|date:"d/m/Y" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="el-muted">Nenhum documento digitalizado ainda.{% if dados.pode_enviar %} Fotografe a ficha de papel assinada e os outros documentos do aluno para guardá-los aqui.{% endif %}</p>
+{% endif %}
+{% if dados.pode_enviar %}
+<div class="el-actions">
+  <a class="el-btn el-btn-secondary" href="{{ dados.url_enviar }}">{% icone "camera" %}Enviar documento</a>
+</div>
+{% endif %}

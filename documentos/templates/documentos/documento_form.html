@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{% if object %}Editar dados do documento{% else %}Enviar documento{% endif %}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+{% url 'alunos:detalhe' aluno.pk as url_do_aluno %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    {% if object %}
+    <p class="el-breadcrumb"><a href="{% url 'documentos:detalhe' object.pk %}">{% icone "seta-voltar" %}{{ object.titulo }}</a></p>
+    <h1 class="el-display">Editar dados do documento</h1>
+    <p class="el-muted">O arquivo não muda: para trocar a foto ou o PDF, envie um documento novo. Toda alteração fica no histórico, com o motivo.</p>
+    {% else %}
+    {% if url_do_aluno and acesso|pode_ver:"identificacao" %}<p class="el-breadcrumb"><a href="{{ url_do_aluno }}#secao-documentos">{% icone "seta-voltar" %}{{ aluno.nome_curto }}</a></p>{% endif %}
+    <h1 class="el-display">Enviar documento</h1>
+    <p class="el-muted">{% if acesso|pode_ver:"identificacao" %}Para o histórico de {{ aluno.nome_curto }}. {% endif %}Fotos e scans ficam guardados com quem digitalizou e quando.</p>
+    {% endif %}
+  </div>
+</header>
+{% if object %}
+{% url 'documentos:detalhe' object.pk as url_de_volta %}
+{% include "core/_formulario.html" with botao="Salvar dados" cancelar=url_de_volta %}
+{% else %}
+{% if url_do_aluno %}{% with url_de_volta=url_do_aluno|add:"#secao-documentos" %}
+{% include "core/_formulario.html" with botao="Enviar documento" cancelar=url_de_volta %}
+{% endwith %}{% else %}{% url 'inicio' as url_de_volta %}
+{% include "core/_formulario.html" with botao="Enviar documento" cancelar=url_de_volta %}
+{% endif %}
+{% endif %}
+{% endblock %}

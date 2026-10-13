@@ -1,1 +1,17 @@
 /* Estilos próprios do módulo aulas. Use os tokens de tokens.css e o prefixo el-. */
+
+/* Total de atendimentos e de aulas pela regra do serviço (RF-55), no topo da lista e no perfil do aluno. */
+.el-aulas-total { font-size: 18px; line-height: 24px; font-weight: 700; color: var(--ink); }
+.el-aulas-resumo { gap: var(--space-1); }
+.el-aulas-secao { display: grid; gap: var(--space-3); min-width: 0; }
+
+/* Filtros de data não precisam ocupar tanto espaço quanto as listas de nomes. */
+.el-filters .el-aulas-filtro-data { flex: 1 1 160px; max-width: 220px; }
+@media (max-width: 420px) {
+  .el-filters .el-aulas-filtro-data { max-width: none; }
+}
+
+/* Quantas fotos foram escolhidas no campo de várias fotos. */
+.el-aulas-fotos-escolhidas { margin: 0; font-size: 15px; line-height: 20px; font-weight: 600; color: var(--ink); }
+.el-aulas-fotos-escolhidas[data-excesso] { color: var(--danger); }
+.el-aulas-fotos-escolhidas:empty { display: none; }

@@ -1,1 +1,69 @@
 /* Estilos próprios do módulo alunos. Use os tokens de tokens.css e o prefixo el-. */
+
+/* ---------- Perfil do aluno ---------- */
+.el-alunos-perfil { display: grid; gap: var(--space-5); min-width: 0; }
+
+/* Ao seguir uma aba, o título da seção não fica escondido atrás da barra do topo (56px). */
+.el-alunos-perfil > section[id^="secao-"] { scroll-margin-top: calc(56px + var(--space-4)); }
+
+.el-alunos-identidade { display: grid; gap: var(--space-1); min-width: 0; }
+.el-alunos-identidade .el-student-name { overflow-wrap: anywhere; }
+
+/* Resumo dentro do bloco do aluno: fundo claro para os dados, como as condições.
+   Duas colunas já no celular, para o resumo e as condições caberem sem rolar demais. */
+.el-alunos-resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-2); }
+.el-alunos-resumo > div { background: var(--surface-raised); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); align-content: start; }
+.el-alunos-resumo > .el-alunos-dl-inteira { grid-column: 1 / -1; }
+.el-alunos-resumo dd { font-weight: 600; }
+.el-alunos-perfil .el-student-flags { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+@media (max-width: 767px) {
+  .el-alunos-perfil .el-student { padding: var(--space-4); }
+}
+@media (min-width: 768px) {
+  .el-alunos-resumo > .el-alunos-dl-inteira { grid-column: auto; }
+}
+
+/* Condição que pede atenção: além da cor, um ícone e a palavra (nada só por cor). */
+.el-flag dd { display: flex; gap: var(--space-1); align-items: flex-start; }
+.el-alunos-icone-flag { width: 18px; height: 18px; margin-top: 3px; color: var(--fita-ink); }
+
+/* Ficha: um bloco por tipo de dado; textos longos ocupam a linha inteira. */
+.el-alunos-grupo { display: grid; gap: var(--space-2); min-width: 0; }
+.el-alunos-grupo + .el-alunos-grupo { border-top: 1px solid var(--line); padding-top: var(--space-3); }
+.el-dl-cols > .el-alunos-dl-inteira { grid-column: 1 / -1; }
+
+.el-alunos-responsavel { display: grid; gap: var(--space-2); }
+
+/* Histórico da situação e professor domiciliar (RF-24). */
+.el-alunos-mudanca { display: grid; gap: var(--space-1); }
+.el-alunos-domiciliar {
+  margin-top: var(--space-2); display: grid; gap: var(--space-2);
+  border-left: 4px solid var(--fita); background: var(--fita-soft);
+  border-radius: var(--radius-sm); padding: var(--space-3) var(--space-4);
+}
+.el-alunos-domiciliar .el-form { gap: var(--space-3); }
+.el-alunos-domiciliar .el-control { background: var(--surface-raised); }
+
+/* Mudar situação: os campos de saída somem quando a nova situação não é "encerrado" (com JavaScript). */
+.el-alunos-saida[hidden] { display: none; }
+
+/* ---------- Ordem de atendimento (RF-46) ---------- */
+.el-alunos-fila-item {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--space-2) var(--space-3);
+  align-items: start; background: var(--surface-raised); border: 1px solid var(--line);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: var(--space-3) var(--space-4);
+}
+.el-alunos-fila-posicao {
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-weight: 500;
+  font-size: 18px; line-height: 24px; min-width: 3ch; color: var(--laco);
+}
+.el-alunos-fila-texto { display: grid; gap: 2px; min-width: 0; }
+.el-alunos-fila-nome {
+  font-weight: 700; display: inline-flex; align-items: center; justify-self: start;
+  min-height: var(--touch-target); overflow-wrap: anywhere;
+}
+.el-alunos-fila-acao { grid-column: 1 / -1; justify-self: start; }
+@media (min-width: 768px) {
+  .el-alunos-fila-item { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; }
+  .el-alunos-fila-acao { grid-column: auto; }
+}

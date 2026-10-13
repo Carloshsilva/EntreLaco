@@ -7,9 +7,12 @@
 - Fotos só saem por `foto`, que confere login, serviço e permissão.
 - Lista da BNCC do serviço, para quem configura (RF-16).
 """
+import logging
+
 from django.contrib import messages
+from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import FieldDoesNotExist, PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Q
@@ -24,6 +27,7 @@ from core import auditoria
 from core.arquivos import servir_arquivo
 from core.models import EventoAuditoria
 from core.permissoes import EDITAR
+from core.registro import pendencias_para
 from core.views import eventos_do_objeto
 from core.views_base import AcessoMixin, CriarComAuditoriaMixin, DoServicoMixin, EditarComAuditoriaMixin
 
@@ -41,11 +45,12 @@ from .models import Aula, FotoDaAula, HabilidadeBNCC
 
 Acao = auditoria.Acao
 Situacao = Aula.Situacao
+logger = logging.getLogger(__name__)
 
 SECOES_DO_REGISTRO = [
     {"titulo": "Aluno e horário", "campos": ["aluno", "aluno_novo", "professor", "data", "hora_inicio", "duracao_minutos"]},
     {"titulo": "O que foi trabalhado", "campos": ["componentes", "conteudo", "participacao", "habilidades"]},
-    {"titulo": "Fotos das atividades", "campos": ["fotos"],
+    {"titulo": "Fotos das atividades", "campos": ["novas_fotos"],
      "ajuda": "Opcional. Também dá para adicionar fotos depois, no detalhe da aula."},
 ]
 SECOES_DE_MARCAR = [{"titulo": "Aluno e horário", "campos": CAMPOS_DE_MARCAR}]
@@ -67,10 +72,10 @@ def _campos_auditados(form, extras=()):
 
 
 def _e_campo_da_aula(nome):
+    """Campo do próprio modelo (fora relações reversas, como Aula.fotos)."""
     try:
-        Aula._meta.get_field(nome)
-        return True
-    except Exception:  # noqa: BLE001 - FieldDoesNotExist
+        return not Aula._meta.get_field(nome).auto_created
+    except FieldDoesNotExist:
         return False
 
 
@@ -98,15 +103,29 @@ def _texto_das_fotos(fotos):
 
 
 def aviso_da_ficha(request, aula):
-    """Mensagem para quando o aluno da aula está com a ficha incompleta (RF-19)."""
+    """Mensagem para quando o aluno da aula está com a ficha incompleta (RF-19).
+
+    A pendência de completar a ficha é calculada pelo módulo de alunos; aqui só se
+    confere, na lista de pendências de quem deu a aula, se ela está lá, para a
+    mensagem nunca prometer o que não existe.
+    """
     aluno = aula.aluno
-    faltas = aluno.faltas_da_ficha()
-    if not faltas:
+    if aluno.ficha_completa:
         return None
-    texto = f"A ficha de {aluno.nome_curto} está incompleta: falta {regras.juntar(faltas)}."
-    if regras.recebe_pendencia_da_ficha(request, aula.professor):
+    faltas = regras.faltas_da_ficha_visiveis(aluno, request.acesso)
+    texto = "A ficha de " + aluno.nome_curto + " está incompleta"
+    texto += f": falta {regras.juntar(faltas)}." if faltas else "."
+    chave = f"ficha-{aluno.pk}-{aula.professor_id}"
+    try:
+        tem_pendencia = any(p.chave == chave for p in pendencias_para(request, usuario=aula.professor))
+    except Exception:  # noqa: BLE001 - outro módulo com defeito não pode derrubar o registro já salvo
+        logger.exception("Não deu para conferir a pendência da ficha do aluno %s", aluno.pk)
+        tem_pendencia = False
+    if tem_pendencia:
         quem = "você" if aula.professor_id == request.user.pk else aula.professor.nome_curto
-        texto += f" A pendência de completar a ficha foi criada para {quem}."
+        primeira = not Aula.objects.filter(aluno=aluno, situacao=Situacao.REGISTRADA).exclude(pk=aula.pk).exists()
+        acao = "foi criada para" if primeira else "continua com"
+        texto += " " + regras.frase(f"A pendência de completar a ficha {acao} {quem}")
     return texto
 
 
@@ -170,7 +189,7 @@ class ListaDeAulasView(AcessoMixin, TemplateView):
             de, ate = ate, de
 
         pessoas = list(
-            type(request.user).objects.filter(
+            get_user_model().objects.filter(
                 Q(vinculos__servico=servico, vinculos__ativo=True, is_active=True)
                 | Q(pk__in=Aula.objects.filter(servico=servico).values("professor_id"))
             ).distinct().order_by("nome")
@@ -220,7 +239,6 @@ class ListaDeAulasView(AcessoMixin, TemplateView):
             "professor": professor,
             "alunos": alunos,
             "aluno": aluno,
-            "rotulo_do_aluno": regras.rotulo_do_aluno,
             "situacao": situacao,
             "situacoes": FILTROS_DE_SITUACAO,
             "pagina": pagina,
@@ -301,10 +319,10 @@ class RegistrarAulaView(AcessoMixin, CriarComAuditoriaMixin, CreateView):
         self.aluno_criado = bool(nome_novo)
 
     def depois_de_salvar(self, aula, form, criado):
-        fotos = salvar_fotos(self.request, aula, form.cleaned_data.get("fotos") or [])
+        fotos = salvar_fotos(self.request, aula, form.cleaned_data.get("novas_fotos") or [])
         mensagem = f"Aula de {aula.aluno.nome_curto} registrada{_texto_das_fotos(fotos)}."
         if self.aluno_criado:
-            mensagem += f" {aula.aluno.nome_curto} foi cadastrado só com o nome."
+            mensagem += f" O cadastro de {aula.aluno.nome_curto} foi criado só com o nome."
         self.mensagem_sucesso = mensagem
         self.aviso_ficha = aviso_da_ficha(self.request, aula)
 
@@ -364,7 +382,9 @@ class MarcarAulaView(AcessoMixin, CriarComAuditoriaMixin, CreateView):
 
     def depois_de_salvar(self, aula, form, criado):
         quem = "sua agenda" if aula.professor_id == self.request.user.pk else f"agenda de {aula.professor.nome_curto}"
-        self.mensagem_sucesso = f"Aula com {aula.aluno.nome_curto} marcada para {_quando(aula)}. Ela já aparece na {quem}."
+        self.mensagem_sucesso = regras.frase(
+            f"Aula com {aula.aluno.nome_curto} marcada para {_quando(aula)}. Ela já aparece na {quem}"
+        )
 
     def get_success_url(self):
         return reverse("aulas:detalhe", args=[self.object.pk])
@@ -434,7 +454,7 @@ class RegistrarMarcadaView(AcessoMixin, DoServicoMixin, AulaMarcadaMixin, Update
         outro_professor = aula.professor_id != self.request.user.pk
         contexto.update({
             "titulo": f"Registrar a aula de {aula.aluno.nome_curto}",
-            "apoio": f"Marcada para {_quando(aula)}, com {aula.professor.nome_curto}. "
+            "apoio": f"Aula marcada com {aula.professor.nome_curto} para {_quando(aula)}. "
                      "Confira os dados e preencha o que foi trabalhado.",
             "voltar_url": reverse("aulas:detalhe", args=[aula.pk]),
             "voltar_rotulo": "Detalhe da aula",
@@ -463,7 +483,7 @@ class RegistrarMarcadaView(AcessoMixin, DoServicoMixin, AulaMarcadaMixin, Update
                 aula.professor = self.request.user
             aula.save()
             form.save_m2m()
-            fotos = salvar_fotos(self.request, aula, form.cleaned_data.get("fotos") or [])
+            fotos = salvar_fotos(self.request, aula, form.cleaned_data.get("novas_fotos") or [])
             auditoria.registrar(
                 self.request, Acao.ALTEROU, aula, descricao="Registrou a aula marcada",
                 mudancas=auditoria.comparar(Aula, antes, auditoria.fotografar(aula, campos)),
@@ -528,11 +548,11 @@ class DetalheDaAulaView(AcessoMixin, DoServicoMixin, DetailView):
         contexto = super().get_context_data(**kwargs)
         aula = self.object
         regra = regras.minutos_por_aula(self.request.servico)
+        aula.falta_registrar = aula.situacao == Situacao.MARCADA and aula.data < regras.hoje()
         contexto.update({
             "regra": regra,
             "texto_da_regra": regras.texto_da_regra(regra),
             "equivalentes": regras.aulas_equivalentes(aula.duracao_minutos, regra),
-            "falta_registrar": aula.situacao == Situacao.MARCADA and aula.data < regras.hoje(),
             "fotos": list(aula.fotos.all()),
             "eventos": eventos_da_aula(self.request, aula),
         })
@@ -626,9 +646,9 @@ class FotoNovaView(AcessoMixin, FormView):
 
     def form_valid(self, form):
         with transaction.atomic():
-            fotos = salvar_fotos(self.request, self.aula, form.cleaned_data["fotos"], form.cleaned_data["legenda"])
+            fotos = salvar_fotos(self.request, self.aula, form.cleaned_data["novas_fotos"], form.cleaned_data["legenda"])
         quantas = "1 foto adicionada" if len(fotos) == 1 else f"{len(fotos)} fotos adicionadas"
-        messages.success(self.request, f"{quantas} à aula de {self.aula.aluno.nome_curto}.")
+        messages.success(self.request, regras.frase(f"{quantas} à aula de {self.aula.aluno.nome_curto}"))
         return redirect(reverse("aulas:detalhe", args=[self.aula.pk]) + "#fotos")
 
 

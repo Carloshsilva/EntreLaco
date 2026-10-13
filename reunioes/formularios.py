@@ -68,7 +68,8 @@ class FormularioReuniaoBase(ModeloFormularioBase):
             campo.required = False
             campo.widget.attrs.pop("required", None)
             campo.help_text = "Se ficar em branco, o título é o tipo da reunião, por exemplo “Reunião semanal da equipe”."
-            tipo = self.initial.get("tipo") or self.instance.tipo or Reuniao.Tipo.SEMANAL
+            tipo = (self.data.get(self.add_prefix("tipo")) if self.is_bound else None) or self.initial.get("tipo") \
+                or self.instance.tipo or Reuniao.Tipo.SEMANAL
             campo.widget.attrs.update({
                 "placeholder": titulo_sugerido(tipo),
                 "data-sugestao-de": "tipo",
@@ -82,9 +83,12 @@ class FormularioReuniaoBase(ModeloFormularioBase):
             campo.help_text = "Quem participa vê a reunião na própria agenda."
             campo.error_messages["invalid_choice"] = ESCOLHA_PESSOAS_INVALIDA
             campo.error_messages["invalid_pk_value"] = ESCOLHA_PESSOAS_INVALIDA
+        if "data" in self.fields:
+            self.fields["data"].error_messages["required"] = "Falta a data da reunião. Escolha o dia."
+            self.fields["data"].error_messages["invalid"] = "Data incompleta ou errada. Escolha o dia no calendário."
         if "duracao_minutos" in self.fields:
             campo = self.fields["duracao_minutos"]
-            campo.help_text = "Em minutos. Por exemplo: 60."
+            campo.help_text = "Por exemplo: 60 para uma hora."
             campo.widget.attrs.update({"min": DURACAO_MINIMA, "max": DURACAO_MAXIMA, "step": 5, "inputmode": "numeric"})
         if "local" in self.fields:
             self.fields["local"].help_text = "Por exemplo: sala da equipe, 4º andar, ou on-line."
@@ -144,6 +148,7 @@ class FormularioCitacaoBase(ModeloFormularioBase):
             campo.queryset = alunos.only("id", "nome", "nome_social", "situacao").order_by("nome")
             campo.label_from_instance = _rotulo_do_aluno
             campo.empty_label = "Escolha o aluno"
+            campo.error_messages["required"] = "Escolha o aluno de quem a equipe falou."
             campo.error_messages["invalid_choice"] = "Escolha um aluno da lista do serviço."
         if "texto" in self.fields:
             self.fields["texto"].help_text = "Resuma o que a equipe falou sobre o aluno."
@@ -151,9 +156,10 @@ class FormularioCitacaoBase(ModeloFormularioBase):
         if "grupo_de_dado" in self.fields:
             campo = self.fields["grupo_de_dado"]
             visiveis = grupos_visiveis(self.acesso) if self.acesso is not None else [c for c, _ in GRUPOS_DE_CITACAO]
+            # O padrão (atas) primeiro; depois os tipos mais restritos, na ordem da plataforma.
+            ordem = sorted(GRUPOS_DE_CITACAO, key=lambda grupo: grupo[0] != GRUPO)
             campo.choices = [
-                (codigo, ROTULOS_DE_GRUPO_DA_CITACAO.get(codigo, nome))
-                for codigo, nome in GRUPOS_DE_CITACAO if codigo in visiveis
+                (codigo, ROTULOS_DE_GRUPO_DA_CITACAO.get(codigo, nome)) for codigo, nome in ordem if codigo in visiveis
             ]
             campo.help_text = (
                 "Quem não vê o tipo escolhido não vê a citação, nem no perfil do aluno. Se a citação fala de saúde "
@@ -165,10 +171,10 @@ class FormularioCitacaoBase(ModeloFormularioBase):
             self.fields["encaminhamento"].widget.attrs.setdefault("rows", 3)
         if "responsavel" in self.fields:
             campo = self.fields["responsavel"]
-            campo.queryset = pessoas_para_escolher(servico, incluir=[self.instance.responsavel_id])
+            campo.queryset = pessoas_para_escolher(servico, incluir=[self.instance.responsavel_id], que_veem=GRUPO)
             campo.label_from_instance = _nome_da_pessoa
             campo.empty_label = "Ninguém por enquanto"
-            campo.help_text = "Quem cuida do encaminhamento. Ele aparece nas pendências dessa pessoa."
+            campo.help_text = "Quem cuida do encaminhamento. Na lista, só quem vê as atas pelo papel na equipe."
             campo.error_messages["invalid_choice"] = ESCOLHA_PESSOA_INVALIDA
         if "prazo" in self.fields:
             self.fields["prazo"].help_text = "Até quando o encaminhamento deve estar feito, se houver prazo."

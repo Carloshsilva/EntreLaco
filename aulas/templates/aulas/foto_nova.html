@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Adicionar fotos{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+{% url 'aulas:detalhe' aula.pk as url_detalhe %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{{ url_detalhe }}">{% icone "seta-voltar" %}Detalhe da aula</a></p>
+    <h1 class="el-display">Adicionar fotos à aula com {{ aula.aluno.nome_curto }}</h1>
+    <p class="el-muted">Aula de {{ quando }}. As fotos aparecem no detalhe da aula.</p>
+  </div>
+</header>
+
+{% if fotos_perdidas and form.errors %}
+<div class="el-alert el-alert-warning">
+  {% icone "alerta" %}
+  <div><p>Escolha as fotos de novo antes de enviar: o navegador não guarda as fotos quando a tela volta com algo a corrigir.</p></div>
+</div>
+{% endif %}
+
+{% include "core/_formulario.html" with botao="Enviar fotos" cancelar=url_detalhe %}
+{% endblock %}

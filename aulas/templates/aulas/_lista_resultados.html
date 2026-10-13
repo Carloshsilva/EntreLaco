@@ -1,0 +1,47 @@
+{% load entrelaco %}{# Resultado da lista de aulas: resumo, tabela e páginas. A lista inteira e a busca do HTMX usam este trecho. #}
+<div class="el-card el-aulas-resumo">
+  <p class="el-aulas-total">{{ resumo }}</p>
+  <p class="el-muted">
+    {% if not professor %}Aulas de toda a equipe{% elif professor.pk == user.pk %}Suas aulas{% else %}Aulas de {{ professor.nome }}{% endif %}{% if aluno %} com {{ aluno.nome_curto }}{% endif %}, de {{ de|date:"d/m/Y" }} a {{ ate|date:"d/m/Y" }}.
+    {% if marcadas or nao_realizadas %}Também no filtro: {% if marcadas %}{{ marcadas }} aula{{ marcadas|pluralize }} marcada{{ marcadas|pluralize }}{% endif %}{% if marcadas and nao_realizadas %} e {% endif %}{% if nao_realizadas %}{{ nao_realizadas }} que não {{ nao_realizadas|pluralize:"aconteceu,aconteceram" }}{% endif %}.{% endif %}
+  </p>
+</div>
+
+{% if pagina.object_list %}
+<div class="el-table-wrap">
+  <table class="el-table el-table-stack">
+    <caption class="el-sr-only">Aulas do filtro, da mais recente para a mais antiga</caption>
+    <thead>
+      <tr>
+        <th scope="col">Aluno</th>
+        <th scope="col">Data</th>
+        <th scope="col">Horário</th>
+        <th scope="col">Professor(a)</th>
+        <th scope="col">Minutos</th>
+        <th scope="col">Situação</th>
+        <th scope="col">Aulas pela regra</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for aula in pagina %}
+      <tr>
+        <th scope="row"><a href="{% url 'aulas:detalhe' aula.pk %}">{{ aula.aluno.nome_curto }}</a></th>
+        <td data-label="Data">{{ aula.data|date:"d/m/Y" }}</td>
+        <td data-label="Horário">{% if aula.hora_inicio %}{{ aula.hora_inicio|time:"H:i" }}{% else %}Sem hora{% endif %}</td>
+        <td data-label="Professor(a)">{{ aula.professor.nome_curto }}</td>
+        <td data-label="Minutos"><span class="el-data">{{ aula.duracao_minutos }}</span></td>
+        <td data-label="Situação">{% include "aulas/_situacao.html" %}</td>
+        <td data-label="Aulas pela regra">{% if aula.equivalentes is not None %}<span class="el-data">{{ aula.equivalentes }}</span>{% elif aula.situacao == "marcada" %}Conta ao registrar{% else %}Não conta{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="el-caption">{{ total }} aula{{ total|pluralize }} no filtro.</p>
+{% include "core/_paginacao.html" %}
+{% else %}
+<div class="el-empty">
+  {% icone "aula" "el-icon-lg" %}
+  <p>Nenhuma aula neste filtro. Mude o período ou escolha toda a equipe.</p>
+</div>
+{% endif %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% load entrelaco alunos_extras %}
+{% block titulo %}{{ aluno.nome_curto }}{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'alunos:lista' %}">{% icone "seta-voltar" %}Alunos</a></p>
+  </div>
+  {% if acoes_rapidas %}
+  <div class="el-pagehead-actions">
+    {% for acao in acoes_rapidas %}<a class="el-btn {% if forloop.first %}el-btn-primary{% else %}el-btn-secondary{% endif %}" href="{{ acao.url }}">{% icone acao.icone %}{{ acao.rotulo }}</a>{% endfor %}
+  </div>
+  {% endif %}
+</header>
+
+<div class="el-alunos-perfil">
+  <section class="el-student" aria-labelledby="titulo-aluno">
+    <div class="el-student-head">
+      <div class="el-alunos-identidade">
+        <h1 id="titulo-aluno" class="el-student-name">{{ aluno.nome }}</h1>
+        {% if aluno.nome_social %}<p class="el-student-meta">Nome social: {{ aluno.nome_social }}</p>{% endif %}
+      </div>
+      <div class="el-student-badges">
+        {% include "alunos/_selo_situacao.html" with situacao=aluno.situacao %}
+        {% if ficha_incompleta %}<span class="el-badge el-badge-fita">{% icone "alerta" %}Ficha incompleta</span>{% endif %}
+        {% if ve_escolar and aluno.risco_evasao %}<span class="el-badge el-badge-danger">{% icone "risco" %}Risco de evasão</span>{% endif %}
+      </div>
+    </div>
+
+    <dl class="el-dl el-dl-cols el-alunos-resumo">
+      <div><dt>Idade</dt><dd>{{ aluno.idade|idade_por_extenso|default:"Não informada" }}</dd></div>
+      <div><dt>Situação</dt><dd>{{ aluno.get_situacao_display }} desde {{ aluno.situacao_desde|date:"d/m/Y" }}</dd></div>
+      <div><dt>Unidade</dt><dd>{{ aluno.unidade|default:"Não informada" }}</dd></div>
+      <div><dt>Leito</dt><dd>{{ aluno.leito|default:"Não informado" }}</dd></div>
+      <div><dt>Data de internação</dt><dd>{{ aluno.data_internacao|date:"d/m/Y"|default:"Não informada" }}</dd></div>
+      {% if ve_escolar and aluno.risco_evasao %}<div class="el-alunos-dl-inteira"><dt>Risco de evasão</dt><dd>{{ aluno.risco_evasao_motivo|default:"Marcado, sem motivo anotado" }}</dd></div>{% endif %}
+    </dl>
+
+    {% if ficha_incompleta %}
+    <div class="el-alert el-alert-warning">
+      {% icone "alerta" %}
+      <div>
+        <p><strong>Ficha incompleta.</strong> {% if faltas %}Falta: {{ faltas }}{% if faltas_escondidas %}, além de dados que o seu papel não mostra{% endif %}.{% else %}Faltam dados que o seu papel não mostra.{% endif %}</p>
+        {% if edita_a_ficha %}<p><a href="{% url 'alunos:editar' aluno.pk %}">Completar a ficha</a></p>{% endif %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if condicoes %}
+    <h2 class="el-label-text">Condições e aprendizagem</h2>
+    <dl class="el-student-flags">
+      {% for c in condicoes %}
+      <div class="el-flag{% if c.atencao %} el-flag-attention{% endif %}">
+        <dt>{{ c.rotulo }}</dt>
+        <dd>{% if c.atencao %}{% icone "alerta" "el-alunos-icone-flag" %}<span class="el-sr-only">Atenção: </span>{% endif %}{{ c.valor }}</dd>
+      </div>
+      {% endfor %}
+    </dl>
+    {% endif %}
+  </section>
+
+  {% if secoes %}
+  <nav class="el-tabs el-alunos-abas" aria-label="Seções do perfil">
+    {% for secao in secoes %}<a href="#secao-{{ secao.chave }}" data-aba-do-perfil>{{ secao.titulo }}</a>{% endfor %}
+  </nav>
+  {% for secao in secoes %}
+  <section id="secao-{{ secao.chave }}" class="el-card" aria-labelledby="titulo-{{ secao.chave }}">
+    <h2 id="titulo-{{ secao.chave }}" class="el-heading">{{ secao.titulo }}</h2>
+    {% include secao.template with dados=secao.contexto %}
+  </section>
+  {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}

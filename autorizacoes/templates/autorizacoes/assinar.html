@@ -1,0 +1,68 @@
+{% extends "base_simples.html" %}
+{% load entrelaco %}
+{% comment %}
+Modo assinatura (SEG-08): sem menu e sem nenhum dado do aluno além do primeiro nome.
+O quadro de assinatura é desenhado pelo static/js/app.js, que grava a imagem PNG em
+base64 no campo escondido id_assinatura_dados.
+{% endcomment %}
+{% block titulo %}{{ termo.titulo }}{% endblock %}
+{% block classe_main %}el-sign{% endblock %}
+{% block conteudo %}
+<header class="el-autorizacoes-assinar-topo">
+  <p class="el-caption">EntreLaço · Termo de autorização</p>
+  <h1 class="el-display">{{ termo.titulo }}</h1>
+  <p>Para a família de <strong>{{ primeiro_nome }}</strong>. Leia com calma. Se tiver dúvida, pergunte à pessoa da equipe que está com você.</p>
+</header>
+
+<article class="el-sign-term" aria-labelledby="titulo-texto">
+  <h2 id="titulo-texto" class="el-heading">Texto do termo</h2>
+  <div class="el-prose">{{ termo.texto }}</div>
+  <p class="el-caption">Versão {{ termo.versao_do_termo }} do termo.</p>
+</article>
+
+<form class="el-form el-autorizacoes-assinar" method="post" action="{{ url }}" novalidate>
+  {% csrf_token %}
+  {% if form.errors %}
+  <div class="el-form-errors" role="alert">
+    <h2>{% if form.errors|length == 1 %}Falta corrigir 1 ponto para enviar{% else %}Falta corrigir {{ form.errors|length }} pontos para enviar{% endif %}</h2>
+    <ul>
+      {% for erro in form.non_field_errors %}<li>{{ erro }}</li>{% endfor %}
+      {% for campo in form %}{% for erro in campo.errors %}<li><a href="#{% if campo.name == 'assinatura_dados' %}quadro-assinatura{% elif campo.id_for_label %}{{ campo.id_for_label }}{% else %}{{ campo.auto_id }}_0{% endif %}">{% if campo.name == 'assinatura_dados' %}Assinatura{% else %}{{ campo.label }}{% endif %}: {{ erro }}</a></li>{% endfor %}{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <section class="el-card" aria-labelledby="titulo-resposta">
+    <h2 id="titulo-resposta" class="el-heading">Sua resposta</h2>
+    {% with c=form|campo:"quem" %}{% if c %}{% include "core/_campo.html" with campo=c %}{% endif %}{% endwith %}
+    {% include "core/_campo.html" with campo=form.nome %}
+    {% include "core/_campo.html" with campo=form.documento %}
+    <div class="el-autorizacoes-decisao">{% include "core/_campo.html" with campo=form.decisao %}</div>
+  </section>
+
+  <section class="el-card" aria-labelledby="titulo-assinatura">
+    <h2 id="titulo-assinatura" class="el-heading">Assinatura</h2>
+    <div class="el-field{% if form.assinatura_dados.errors %} el-field-error{% endif %}">
+      <p class="el-hint" id="dica-assinatura">Assine com o dedo dentro do quadro. A assinatura é obrigatória para autorizar.</p>
+      <canvas id="quadro-assinatura" class="el-sign-pad{% if form.assinatura_dados.errors %} el-autorizacoes-quadro-erro{% endif %}" data-assinatura data-destino="id_assinatura_dados" tabindex="0" aria-label="Quadro de assinatura: assine com o dedo" aria-describedby="dica-assinatura{% if form.assinatura_dados.errors %} erro-assinatura{% endif %}"></canvas>
+      <input type="hidden" id="id_assinatura_dados" name="assinatura_dados">
+      {% if form.assinatura_dados.errors %}<p class="el-error" id="erro-assinatura">{% icone "erro" %}<span>{{ form.assinatura_dados.errors|join:" " }}</span></p>{% endif %}
+      <div class="el-actions">
+        <button type="button" class="el-btn el-btn-secondary" data-limpar-assinatura="quadro-assinatura">{% icone "excluir" %}Limpar</button>
+      </div>
+    </div>
+    {% include "core/_campo.html" with campo=form.sem_assinatura_com_o_dedo %}
+  </section>
+
+  <div class="el-actions">
+    <button type="submit" class="el-btn el-btn-primary el-btn-block">Enviar a minha resposta</button>
+  </div>
+</form>
+
+<form class="el-autorizacoes-cancelar" method="post" action="{{ url }}" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="acao" value="cancelar">
+  <button type="submit" class="el-btn el-btn-quiet">Cancelar e devolver o tablet</button>
+  <p class="el-caption">Nada é registrado como resposta: a autorização fica pendente, e a pessoa da equipe entra de novo.</p>
+</form>
+{% endblock %}

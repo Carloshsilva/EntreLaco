@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Termos de autorização{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'equipe:configuracao' %}">{% icone "seta-voltar" %}Configuração</a></p>
+    <h1 class="el-display">Termos de autorização</h1>
+    <p class="el-muted">O texto que a família lê antes de autorizar. Cada tipo tem um termo vigente; as versões anteriores ficam guardadas, e cada autorização aponta para a versão que a família viu.</p>
+  </div>
+</header>
+
+<div class="el-alert el-alert-warning">
+  {% icone "alerta" %}
+  <div><p>Os textos definitivos ainda vão ser escritos ou revisados pelo advogado (LGPD-02). Até lá, cadastre um texto provisório e diga isso no próprio texto.</p></div>
+</div>
+
+{% for t in tipos %}
+<section class="el-card" aria-labelledby="termo-{{ t.codigo }}">
+  <div class="el-card-head">
+    <h2 id="termo-{{ t.codigo }}" class="el-heading">{{ t.rotulo }}</h2>
+    {% if t.vigente %}<span class="el-badge el-badge-success">Versão {{ t.vigente.versao_do_termo }} vigente</span>{% else %}<span class="el-badge el-badge-danger">Sem termo</span>{% endif %}
+  </div>
+  {% if t.vigente %}
+  <dl class="el-dl el-dl-cols">
+    <div><dt>Título</dt><dd><a href="{% url 'autorizacoes:termo_detalhe' t.vigente.pk %}">{{ t.vigente.titulo }}</a></dd></div>
+    <div><dt>Vigente desde</dt><dd><time datetime="{{ t.vigente.criado_em|date:'c' }}">{{ t.vigente.criado_em|date:"d/m/Y" }}</time>{% if t.vigente.criado_por %}, por {{ t.vigente.criado_por.nome_curto }}{% endif %}</dd></div>
+    <div><dt>Usado em</dt><dd>{{ t.vigente.usos }} autorizaç{{ t.vigente.usos|pluralize:"ão,ões" }}</dd></div>
+  </dl>
+  <div class="el-actions">
+    <a class="el-btn el-btn-secondary" href="{% url 'autorizacoes:termo_novo' %}?base={{ t.vigente.pk }}">{% icone "mais" %}Criar nova versão<span class="el-sr-only"> do termo de {{ t.rotulo_minusculo }}</span></a>
+  </div>
+  {% else %}
+  <p>O serviço ainda não tem termo de {{ t.rotulo_minusculo }}. Sem ele, ninguém consegue colher esta autorização.</p>
+  <div class="el-actions">
+    <a class="el-btn el-btn-secondary" href="{% url 'autorizacoes:termo_novo' %}?tipo={{ t.codigo }}">{% icone "mais" %}Cadastrar o termo de {{ t.rotulo_minusculo }}</a>
+  </div>
+  {% endif %}
+  {% if t.anteriores %}
+  <h3 class="el-label-text">Versões anteriores</h3>
+  <div class="el-table-wrap">
+    <table class="el-table el-table-stack">
+      <caption class="el-sr-only">Versões anteriores do termo de {{ t.rotulo_minusculo }}</caption>
+      <thead><tr><th scope="col">Versão</th><th scope="col">Título</th><th scope="col">Criada em</th><th scope="col">Usada em</th></tr></thead>
+      <tbody>
+        {% for v in t.anteriores %}
+        <tr>
+          <td data-label="Versão"><span class="el-data">{{ v.versao_do_termo }}</span></td>
+          <td data-label="Título"><a href="{% url 'autorizacoes:termo_detalhe' v.pk %}">{{ v.titulo }}</a></td>
+          <td data-label="Criada em">{{ v.criado_em|date:"d/m/Y" }}</td>
+          <td data-label="Usada em">{{ v.usos }} autorizaç{{ v.usos|pluralize:"ão,ões" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}

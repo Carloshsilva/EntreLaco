@@ -1,1 +1,61 @@
 /* Estilos próprios do módulo autorizacoes. Use os tokens de tokens.css e o prefixo el-. */
+
+/* Seção do perfil: um bloco por tipo de autorização, lado a lado a partir do tablet. */
+.el-autorizacoes-tipos { display: grid; gap: var(--space-4); }
+@media (min-width: 768px) { .el-autorizacoes-tipos { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.el-autorizacoes-tipo {
+  display: grid; gap: var(--space-3); align-content: start; min-width: 0;
+  border: 1px solid var(--line); border-radius: var(--radius-md); padding: var(--space-4);
+}
+.el-autorizacoes-tipo .el-actions .el-btn { flex: 0 1 auto; }
+
+/* Coletas anteriores e o texto do termo: abrir e fechar, com área de toque de 48px. */
+.el-autorizacoes-anteriores, .el-autorizacoes-termo { display: grid; gap: var(--space-2); min-width: 0; }
+.el-autorizacoes-anteriores > summary, .el-autorizacoes-termo > summary {
+  min-height: var(--touch-target); display: flex; align-items: center;
+  cursor: pointer; font-weight: 600; color: var(--laco);
+}
+.el-autorizacoes-termo {
+  border: 1px solid var(--line); border-radius: var(--radius-md); padding: 0 var(--space-4);
+  background: var(--surface-raised);
+}
+.el-autorizacoes-termo[open] { padding-bottom: var(--space-4); }
+
+/* Situação atual no alto da tela de colher. */
+.el-autorizacoes-atual { display: grid; gap: var(--space-1); }
+.el-autorizacoes-atual .el-badge { margin-left: var(--space-1); }
+
+/* Formas de coleta: um cartão por forma, uma escolha por vez. */
+.el-autorizacoes-formas { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-3); }
+@media (min-width: 768px) { .el-autorizacoes-formas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.el-autorizacoes-forma { align-content: start; }
+.el-autorizacoes-forma h3 { display: flex; gap: var(--space-2); align-items: center; }
+.el-autorizacoes-forma-futura { background: var(--surface-sunken); box-shadow: none; }
+.el-autorizacoes-forma-futura h3, .el-autorizacoes-forma-futura p { color: var(--ink-muted); }
+
+.el-autorizacoes-destaque { font-weight: 700; }
+.el-autorizacoes-passos { margin: 0; padding-left: var(--space-5); display: grid; gap: var(--space-2); }
+
+/* Modo assinatura: decisão em dois botões grandes de rádio. */
+.el-autorizacoes-assinar-topo { display: grid; gap: var(--space-2); }
+.el-autorizacoes-decisao .el-choices { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+.el-autorizacoes-decisao .el-choices label {
+  min-height: 72px; padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--line-strong); border-radius: var(--radius-md); background: var(--surface-raised);
+  font-size: 18px; line-height: 24px; font-weight: 700;
+}
+.el-autorizacoes-decisao .el-choices label:has(input:checked) { border-color: var(--laco); background: var(--laco-soft); }
+.el-autorizacoes-decisao .el-choices label:has(input:focus-visible) { box-shadow: var(--focus-ring); }
+@media (max-width: 359px) { .el-autorizacoes-decisao .el-choices { grid-template-columns: 1fr; } }
+.el-autorizacoes-quadro-erro { border-color: var(--danger); border-style: solid; }
+.el-autorizacoes-cancelar { display: grid; gap: var(--space-1); justify-items: start; }
+
+/* Comprovante. */
+.el-autorizacoes-impressao { display: block; overflow-wrap: anywhere; word-break: break-all; }
+.el-autorizacoes-confere { display: flex; gap: var(--space-1); align-items: flex-start; margin-top: var(--space-2); font-weight: 600; color: var(--success); }
+/* A imagem da assinatura tem fundo branco também no tema escuro, como no papel. */
+.el-autorizacoes-assinatura { margin: 0; display: grid; gap: var(--space-1); justify-items: start; }
+.el-autorizacoes-assinatura img {
+  width: 100%; max-width: 480px; height: auto; background: #FFFFFF;
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+}

@@ -9,7 +9,7 @@ from django.db.models import Prefetch, Q
 from django.utils import timezone
 
 from core.models import Vinculo
-from core.permissoes import ACESSO_VAZIO, Acesso
+from core.permissoes import ACESSO_VAZIO, EDITAR, VER, Acesso
 
 from .models import GRUPOS_DE_CITACAO, CitacaoDeAluno
 
@@ -33,24 +33,32 @@ def citacoes_visiveis(servico, acesso):
     return CitacaoDeAluno.objects.filter(servico=servico, grupo_de_dado__in=grupos_visiveis(acesso))
 
 
-def pessoas_ativas(servico):
-    """Pessoas com vínculo ativo no serviço e login ativo."""
-    Usuario = get_user_model()
-    if servico is None:
-        return Usuario.objects.none()
-    return Usuario.objects.filter(vinculos__servico=servico, vinculos__ativo=True, is_active=True)
+def pessoas_ativas(servico, que_veem=None):
+    """Pessoas com vínculo ativo no serviço e login ativo.
 
-
-def pessoas_para_escolher(servico, incluir=()):
-    """Pessoas do serviço para um campo de escolha.
-
-    As ativas, mais as já escolhidas no cadastro (`incluir`), para que quem saiu da
-    equipe não suma de uma reunião antiga ao editá-la. Nunca entra pessoa de outro serviço.
+    Com `que_veem`, só as que, pelo papel no serviço, veem esse tipo de dado.
     """
     Usuario = get_user_model()
     if servico is None:
         return Usuario.objects.none()
-    filtro = Q(pk__in=pessoas_ativas(servico).values("pk"))
+    # Num filter() só, para o papel ser o do vínculo com este serviço, e não o de outro.
+    condicoes = {"vinculos__servico": servico, "vinculos__ativo": True, "is_active": True}
+    if que_veem:
+        condicoes[f"vinculos__papel__acessos__{que_veem}__in"] = [VER, EDITAR]
+    return Usuario.objects.filter(**condicoes)
+
+
+def pessoas_para_escolher(servico, incluir=(), que_veem=None):
+    """Pessoas do serviço para um campo de escolha.
+
+    As ativas (e, com `que_veem`, só as que veem esse tipo de dado), mais as já escolhidas
+    no cadastro (`incluir`), para que quem saiu da equipe não suma de uma reunião antiga ao
+    editá-la. Nunca entra pessoa de outro serviço.
+    """
+    Usuario = get_user_model()
+    if servico is None:
+        return Usuario.objects.none()
+    filtro = Q(pk__in=pessoas_ativas(servico, que_veem).values("pk"))
     ids = [pk for pk in incluir if pk]
     if ids:
         do_servico = Usuario.objects.filter(vinculos__servico=servico).values("pk")

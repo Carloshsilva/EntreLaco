@@ -3,14 +3,13 @@
 - Menu: "Aulas", para quem vê aulas.
 - Agenda (RF-09, RF-44): aulas marcadas, registradas e as que não aconteceram,
   de uma pessoa (o calendário do professor) ou de todo o serviço.
-- Pendências:
-  - aula marcada que passou do dia e não foi registrada, para o professor da aula;
-  - ficha incompleta de aluno com aula registrada, para quem deu a aula (RF-19).
+- Pendência: aula marcada que passou do dia e não foi registrada, para o
+  professor da aula. A pendência da ficha incompleta (RF-19) é do módulo de
+  alunos; o registro de aula só avisa quando ela existe.
 - Seção "Aulas" no perfil do aluno, com as contas pela regra do serviço (RF-55).
 """
 import datetime
 
-from django.contrib.auth import get_user_model
 from django.db.models import Max, Min
 from django.urls import reverse
 
@@ -27,7 +26,6 @@ from core.registro import (
 
 GRUPO = "aulas"
 UM_DIA = datetime.timedelta(days=1)
-PRAZO_DA_FICHA_DIAS = 7
 
 registrar_menu(ItemDeMenu("Aulas", "aulas:lista", "aula", ordem=40, principal=True, grupo="aulas", ativo_em=("aulas:",)))
 
@@ -115,64 +113,6 @@ def pendencias_de_aulas(request, usuario, todas):
     return pendencias
 
 
-def pendencias_da_ficha(request, usuario, todas):
-    """Ficha incompleta de aluno com aula registrada: pendência de quem deu a aula (RF-19).
-
-    Uma por aluno e professor (chave "ficha-<aluno>-<professor>", a mesma do
-    módulo de alunos, para não repetir). Só para quem pode editar a
-    identificação do aluno, e só alunos ativos ou em pausa.
-    """
-    from alunos.models import Aluno
-
-    from . import regras
-    from .models import Aula
-
-    servico = getattr(request, "servico", None)
-    acesso = request.acesso
-    if servico is None or usuario is None or not acesso.pode_ver(GRUPO) or not acesso.pode_ver("identificacao"):
-        return []
-    aulas = Aula.objects.filter(
-        servico=servico, situacao=Aula.Situacao.REGISTRADA, aluno__situacao__in=regras.SITUACOES_QUE_RECEBEM_AULA,
-    )
-    if not todas:
-        if not regras.recebe_pendencia_da_ficha(request, usuario):
-            return []
-        aulas = aulas.filter(professor=usuario)
-    pares = list(aulas.order_by().values("aluno_id", "professor_id").annotate(primeira=Min("data")))
-    if not pares:
-        return []
-    alunos = Aluno.objects.filter(servico=servico, pk__in={p["aluno_id"] for p in pares}).prefetch_related("responsaveis")
-    faltas = {aluno.pk: (aluno, aluno.faltas_da_ficha()) for aluno in alunos}
-    professores = get_user_model().objects.in_bulk({p["professor_id"] for p in pares}) if todas else {usuario.pk: usuario}
-    recebe = {}  # professor → pode completar a ficha (uma consulta por professor, não por aluno)
-    pendencias = []
-    for par in sorted(pares, key=lambda p: p["primeira"]):
-        aluno, o_que_falta = faltas.get(par["aluno_id"], (None, []))
-        professor = professores.get(par["professor_id"])
-        if aluno is None or not o_que_falta or professor is None:
-            continue
-        if todas:
-            if professor.pk not in recebe:
-                recebe[professor.pk] = regras.recebe_pendencia_da_ficha(request, professor)
-            if not recebe[professor.pk]:
-                continue
-        url = regras.url_ou_none("alunos:editar", aluno.pk) or regras.url_ou_none("alunos:detalhe", aluno.pk)
-        if url is None:
-            continue
-        pendencias.append(Pendencia(
-            titulo=f"Completar a ficha de {aluno.nome_curto}",
-            url=url,
-            tipo="Ficha incompleta",
-            prazo=par["primeira"] + datetime.timedelta(days=PRAZO_DA_FICHA_DIAS),
-            aluno=aluno.nome_curto,
-            detalhe=f"Falta {regras.juntar(o_que_falta)}.",
-            origem=f"Aula de {par['primeira']:%d/%m} registrada sem a ficha completa",
-            responsavel=professor.nome_curto if todas else "",
-            chave=f"ficha-{aluno.pk}-{professor.pk}",
-        ))
-    return pendencias
-
-
 # ---------------------------------------------------------------- perfil do aluno
 
 QUANTAS_ULTIMAS = 10
@@ -223,7 +163,6 @@ def secao_aulas_do_aluno(request, aluno):
 
 registrar_fonte_da_agenda(eventos_de_aulas)
 registrar_fonte_de_pendencias(pendencias_de_aulas)
-registrar_fonte_de_pendencias(pendencias_da_ficha)
 registrar_secao_do_aluno(SecaoDoAluno(
     chave="aulas",
     titulo="Aulas",

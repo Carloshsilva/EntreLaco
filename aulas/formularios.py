@@ -31,7 +31,7 @@ WIDGETS_DA_AULA = {
     "habilidades": forms.CheckboxSelectMultiple,
     "conteudo": forms.Textarea(attrs={"rows": 4}),
     "participacao": forms.Textarea(attrs={"rows": 3}),
-    "duracao_minutos": forms.NumberInput(attrs={"inputmode": "numeric", "min": 1, "max": MINUTOS_MAXIMOS, "step": 5}),
+    "duracao_minutos": forms.NumberInput(attrs={"inputmode": "numeric"}),
 }
 
 
@@ -127,6 +127,7 @@ class AulaFormBase(ModeloFormularioBase):
             self.fields["hora_inicio"].error_messages["invalid"] = "Horário em formato errado. Escreva como 14:30."
         if "duracao_minutos" in self.fields:
             campo = self.fields["duracao_minutos"]
+            campo.widget.attrs.update({"min": 1, "max": MINUTOS_MAXIMOS})
             campo.help_text = (
                 f"Cada {regras.minutos_por_aula(self.servico)} minutos contam 1 aula na regra do serviço."
             )
@@ -204,8 +205,9 @@ class RegistroDeAulaForm(AulaFormBase):
                   "A plataforma cadastra só com o nome, e completar a ficha vira pendência para quem deu a aula.",
         widget=forms.TextInput(attrs={"autocomplete": "off", "autocapitalize": "words"}),
     )
-    fotos = CampoDeFotos(
-        label="Fotos das atividades", required=False,
+    # Não pode se chamar "fotos": é o nome da relação Aula.fotos, e a trilha tomaria o campo como do modelo.
+    novas_fotos = CampoDeFotos(
+        label="Escolher as fotos", required=False,
         help_text=f"Pode escolher várias de uma vez, até {MAXIMO_DE_FOTOS_POR_ENVIO}. JPG, PNG ou WEBP. "
                   "A plataforma tira a localização e os dados do aparelho de cada foto.",
     )
@@ -251,7 +253,7 @@ class RegistroDeAulaForm(AulaFormBase):
 class FotosForm(FormularioBase):
     """Adicionar fotos a uma aula já registrada."""
 
-    fotos = CampoDeFotos(
+    novas_fotos = CampoDeFotos(
         label="Fotos das atividades",
         help_text=f"Pode escolher várias de uma vez, até {MAXIMO_DE_FOTOS_POR_ENVIO}. JPG, PNG ou WEBP. "
                   "A plataforma tira a localização e os dados do aparelho de cada foto.",

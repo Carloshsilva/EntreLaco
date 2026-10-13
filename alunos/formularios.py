@@ -161,7 +161,10 @@ class FormularioMudancaDeSituacao(FormularioBase):
         error_messages={"required": "Conte o motivo da mudança, por exemplo “alta hospitalar” ou “voltou para a "
                                     "internação”. O motivo fica no histórico do aluno."},
     )
-    motivo_saida = forms.ChoiceField(label="Motivo de saída", required=False, widget=forms.RadioSelect)
+    motivo_saida = forms.ChoiceField(
+        label="Motivo de saída", required=False, widget=forms.RadioSelect,
+        error_messages={"invalid_choice": "Escolha um dos motivos de saída da lista."},
+    )
     responsavel = forms.ModelChoiceField(
         label="Responsável pela saída", required=False, queryset=None,
         empty_label="Escolha a pessoa",

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{% if definitivo %}Colher o sim definitivo{% else %}Colher autorização{% endif %}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{{ url_voltar }}">{% icone "seta-voltar" %}{{ aluno.nome_curto }}</a></p>
+    <h1 class="el-display">{% if definitivo %}Colher o sim definitivo{% else %}Colher a autorização{% endif %}: {{ tipo_minusculo }}</h1>
+    <p class="el-muted">{{ aluno.nome_curto }}{% if termo %} · termo “{{ termo.titulo }}”, versão {{ termo.versao_do_termo }}{% endif %}</p>
+  </div>
+</header>
+
+{% if atual %}
+<div class="el-autorizacoes-atual">
+  <p>Situação atual: {% include "autorizacoes/_selo.html" with autorizacao=atual %}</p>
+  <p class="el-caption">{% if atual.colhida_em %}Colhida em {{ atual.colhida_em|date:"d/m/Y \à\s H:i" }}{% else %}Registrada em {{ atual.criado_em|date:"d/m/Y" }}{% endif %}{% if atual.colhida_por %} por {{ atual.colhida_por.nome_curto }}{% endif %}. <a href="{% url 'autorizacoes:detalhe' atual.pk %}">Ver comprovante</a></p>
+</div>
+{% endif %}
+
+{% if not termo %}
+<div class="el-alert el-alert-warning">
+  {% icone "alerta" %}
+  <div>
+    <p>O serviço ainda não tem um termo de {{ tipo_minusculo }}. Sem o termo, não dá para colher esta autorização.</p>
+    {% if acesso.configurar %}
+    <p><a class="el-btn el-btn-secondary" href="{% url 'autorizacoes:termo_novo' %}?tipo={{ tipo }}">{% icone "config" %}Cadastrar o termo de {{ tipo_minusculo }}</a></p>
+    {% else %}
+    <p>Peça a quem configura o serviço para cadastrar o termo em Configuração, Termos de autorização.</p>
+    {% endif %}
+  </div>
+</div>
+
+{% elif not pode_colher %}
+<div class="el-alert el-alert-success">
+  {% icone "ok" %}
+  <div><p>A autorização de {{ tipo_minusculo }} já está válida e não precisa ser colhida de novo. Se a família pedir para revogar, registre a revogação no comprovante.</p></div>
+</div>
+
+{% elif not forma %}
+{% if definitivo %}
+<div class="el-alert el-alert-info">
+  {% icone "info" %}
+  <div><p>A família deu o sim provisório por WhatsApp{% if atual.colhida_em %} em {{ atual.colhida_em|date:"d/m/Y" }}{% endif %}. Ele já libera o contato com a escola; agora colha o sim definitivo no tablet ou no papel.</p></div>
+</div>
+{% elif atual.situacao == "pendente" and atual.forma == "tablet" %}
+<div class="el-alert el-alert-info">
+  {% icone "info" %}
+  <div>
+    <p>Uma assinatura no tablet começou em {{ atual.criado_em|date:"d/m/Y \à\s H:i" }} e não terminou.</p>
+    <p><a class="el-btn el-btn-secondary" href="{% url 'autorizacoes:assinar' atual.pk %}">{% icone "assinatura" %}Continuar a assinatura no tablet</a></p>
+  </div>
+</div>
+{% endif %}
+
+<section class="el-section" aria-labelledby="titulo-formas">
+  <h2 id="titulo-formas" class="el-heading">Como a família vai responder?</h2>
+  <p class="el-muted">Escolha uma forma. Cada coleta fica registrada à parte; a anterior continua guardada como prova.</p>
+  <ul class="el-autorizacoes-formas">
+    {% if "tablet" in permitidas %}
+    <li class="el-card el-autorizacoes-forma">
+      <h3 class="el-label-text">{% icone "assinatura" %}Assinatura no tablet</h3>
+      <p>O responsável lê o termo e assina com o dedo neste aparelho. Enquanto isso, a tela mostra só o termo; no fim, a plataforma pede o seu login de novo.</p>
+      <p><a class="el-btn el-btn-secondary" href="{{ url_colher }}?forma=tablet">Usar assinatura no tablet</a></p>
+    </li>
+    {% endif %}
+    {% if "papel" in permitidas %}
+    <li class="el-card el-autorizacoes-forma">
+      <h3 class="el-label-text">{% icone "papel" %}Papel assinado e fotografado</h3>
+      <p>O responsável assina o termo impresso, e você fotografa o papel. Serve para quem não usa nada eletrônico.</p>
+      <p><a class="el-btn el-btn-secondary" href="{{ url_colher }}?forma=papel">Usar papel assinado</a></p>
+    </li>
+    {% endif %}
+    {% if "whatsapp" in permitidas %}
+    <li class="el-card el-autorizacoes-forma">
+      <h3 class="el-label-text">{% icone "telefone" %}Sim por WhatsApp</h3>
+      <p>O responsável diz sim pelo WhatsApp de trabalho, e você anexa a conversa exportada. É provisório: já libera o contato com a escola e fica nas suas pendências até o sim definitivo.</p>
+      <p><a class="el-btn el-btn-secondary" href="{{ url_colher }}?forma=whatsapp">Usar sim por WhatsApp</a></p>
+    </li>
+    {% endif %}
+    <li class="el-card el-autorizacoes-forma el-autorizacoes-forma-futura">
+      <h3 class="el-label-text">{% icone "link" %}Link para o celular</h3>
+      <p>O responsável recebe um link e assina no próprio celular.</p>
+      <p><button type="button" class="el-btn el-btn-secondary" disabled>Chega na próxima versão</button></p>
+    </li>
+    {% if "pendente" in permitidas %}
+    <li class="el-card el-autorizacoes-forma">
+      <h3 class="el-label-text">{% icone "relogio" %}Registrar como pendente</h3>
+      <p>A família ainda vai decidir. A autorização fica pendente e aparece nas suas pendências até a resposta.</p>
+      <p><a class="el-btn el-btn-secondary" href="{{ url_colher }}?forma=pendente">Registrar como pendente</a></p>
+    </li>
+    {% endif %}
+  </ul>
+  {% if definitivo %}<p class="el-muted">O sim definitivo não pode ser outro sim por WhatsApp: use o tablet ou o papel.</p>{% endif %}
+</section>
+
+<details class="el-autorizacoes-termo">
+  <summary>Ler o termo que a família vai autorizar (versão {{ termo.versao_do_termo }})</summary>
+  <h2 class="el-label-text">{{ termo.titulo }}</h2>
+  <div class="el-prose">{{ termo.texto }}</div>
+</details>
+
+{% else %}
+<section class="el-section" aria-labelledby="titulo-forma">
+  {% if forma == "papel" %}
+  <h2 id="titulo-forma" class="el-heading">{% icone "papel" %}Papel assinado e fotografado</h2>
+  <p class="el-muted">Registre quem assinou, o que a família decidiu e a foto do papel. A foto é a prova da autorização.</p>
+  {% elif forma == "whatsapp" %}
+  <h2 id="titulo-forma" class="el-heading">{% icone "telefone" %}Sim por WhatsApp</h2>
+  <p class="el-muted">Registre quem disse sim e anexe a conversa exportada do WhatsApp de trabalho.</p>
+  <div class="el-alert el-alert-info">
+    {% icone "info" %}
+    <div><p>O sim por WhatsApp é provisório: já libera o contato com a escola e fica nas suas pendências até o sim definitivo, no tablet ou no papel. Se ele basta para o contato com a escola, o advogado ainda vai responder (LGPD-05).</p></div>
+  </div>
+  {% else %}
+  <h2 id="titulo-forma" class="el-heading">{% icone "relogio" %}Registrar como pendente</h2>
+  <p class="el-muted">A família vai decidir depois. A autorização fica pendente, e a tarefa de colher a resposta aparece nas suas pendências.</p>
+  {% endif %}
+
+  {% if forma != "pendente" %}
+  <details class="el-autorizacoes-termo">
+    <summary>Ler o termo que a família vai autorizar (versão {{ termo.versao_do_termo }})</summary>
+    <h3 class="el-label-text">{{ termo.titulo }}</h3>
+    <div class="el-prose">{{ termo.texto }}</div>
+  </details>
+  {% endif %}
+
+  <form class="el-form" method="post" action="{{ url_colher }}?forma={{ forma }}"{% if form.is_multipart %} enctype="multipart/form-data"{% endif %} novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="forma" value="{{ forma }}">
+    {% include "core/_erros_do_formulario.html" %}
+    {% for c in form %}{% include "core/_campo.html" with campo=c %}{% endfor %}
+    <div class="el-actions el-actions-sticky">
+      <button type="submit" class="el-btn el-btn-primary">{% if forma == "papel" %}Registrar papel assinado{% elif forma == "whatsapp" %}Registrar sim provisório{% else %}Registrar como pendente{% endif %}</button>
+      <a class="el-btn el-btn-secondary" href="{{ url_colher }}">Escolher outra forma</a>
+    </div>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

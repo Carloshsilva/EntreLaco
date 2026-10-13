@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{{ documento.titulo }}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+{% url 'alunos:detalhe' aluno.pk as url_do_aluno %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    {% if url_do_aluno and acesso|pode_ver:"identificacao" %}<p class="el-breadcrumb"><a href="{{ url_do_aluno }}#secao-documentos">{% icone "seta-voltar" %}Documentos de {{ aluno.nome_curto }}</a></p>{% endif %}
+    <h1 class="el-display">{{ documento.titulo }}</h1>
+    <p class="el-muted">{{ documento.get_tipo_display }} · digitalizado por {% if documento.criado_por %}{{ documento.criado_por.nome_curto }}{% else %}pessoa que não está mais na plataforma{% endif %} em {{ documento.criado_em|date:"d/m/Y" }}</p>
+  </div>
+  <div class="el-pagehead-actions">
+    <a class="el-btn el-btn-primary" href="{% url 'documentos:arquivo' documento.pk %}" hx-boost="false">{% if e_imagem %}{% icone "foto" %}Abrir a foto{% else %}{% icone "baixar" %}Baixar o PDF{% endif %}</a>
+    {% if acesso|pode_editar:"documentos" %}<a class="el-btn el-btn-secondary" href="{% url 'documentos:editar' documento.pk %}">{% icone "editar" %}Editar dados</a>{% endif %}
+  </div>
+</header>
+
+{% if e_imagem %}
+<figure class="el-card el-documentos-previa">
+  <img src="{% url 'documentos:arquivo' documento.pk %}?previa=1" alt="Foto do documento “{{ documento.titulo }}”" loading="lazy">
+  <figcaption class="el-caption">Prévia. Para ver em tamanho real, use “Abrir a foto”.</figcaption>
+</figure>
+{% endif %}
+
+<section class="el-card" aria-labelledby="titulo-dados">
+  <h2 id="titulo-dados" class="el-heading">Dados do documento</h2>
+  <dl class="el-dl el-dl-cols">
+    <div><dt>Tipo</dt><dd>{{ documento.get_tipo_display }}</dd></div>
+    <div><dt>Data do documento</dt><dd>{% if documento.data_documento %}<time datetime="{{ documento.data_documento|date:'Y-m-d' }}">{{ documento.data_documento|date:"d/m/Y" }}</time>{% else %}Não informada{% endif %}</dd></div>
+    <div><dt>Digitalizado por</dt><dd>{% if documento.criado_por %}{{ documento.criado_por.nome }}{% else %}Pessoa que não está mais na plataforma{% endif %}</dd></div>
+    <div><dt>Enviado em</dt><dd><time datetime="{{ documento.criado_em|date:'c' }}">{{ documento.criado_em|date:"d/m/Y \à\s H:i" }}</time></dd></div>
+    <div><dt>Arquivo</dt><dd>{% if e_imagem %}Foto{% else %}PDF{% endif %}, {{ documento.tamanho|filesizeformat }}</dd></div>
+    <div class="el-documentos-inteiro">
+      <dt>Impressão digital do arquivo</dt>
+      <dd><span class="el-data el-documentos-digital">{{ documento.impressao_digital|default:"Não calculada" }}</span></dd>
+      <dd class="el-caption">Código calculado a partir do arquivo no envio. Se o arquivo mudasse, o código mudaria: ele mostra que este é o mesmo arquivo enviado.</dd>
+    </div>
+    {% if documento.observacoes %}<div class="el-documentos-inteiro"><dt>Observações</dt><dd class="el-prose">{{ documento.observacoes }}</dd></div>{% endif %}
+  </dl>
+  <p class="el-caption">Nesta versão, documentos não podem ser excluídos: quanto tempo guardar cada um, e o papel original depois da foto, ainda depende da orientação do advogado.</p>
+</section>
+
+<section class="el-card" aria-labelledby="titulo-historico">
+  <h2 id="titulo-historico" class="el-heading">Histórico</h2>
+  {% include "core/_trilha.html" with eventos=eventos %}
+</section>
+{% endblock %}

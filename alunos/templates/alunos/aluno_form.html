@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{% if object %}Editar ficha · {{ object.nome_curto }}{% else %}Cadastrar aluno{% endif %}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    {% if object %}
+    <p class="el-breadcrumb"><a href="{% url 'alunos:detalhe' object.pk %}">{% icone "seta-voltar" %}{{ object.nome_curto }}</a></p>
+    <h1 class="el-display">Editar ficha</h1>
+    <p class="el-muted">{{ object.nome }}. Aparecem só os dados que o seu papel pode editar.</p>
+    {% else %}
+    <p class="el-breadcrumb"><a href="{% url 'alunos:lista' %}">{% icone "seta-voltar" %}Alunos</a></p>
+    <h1 class="el-display">Cadastrar aluno</h1>
+    <p class="el-muted">Só o nome é obrigatório: dá para cadastrar o mínimo agora e completar a ficha depois.</p>
+    {% endif %}
+  </div>
+</header>
+{% if object %}{% url 'alunos:detalhe' object.pk as url_volta %}{% else %}{% url 'alunos:lista' as url_volta %}{% endif %}
+{% include "core/_formulario.html" with botao=botao cancelar=url_volta secoes=secoes colunas=True %}
+{% endblock %}

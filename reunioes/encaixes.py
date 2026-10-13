@@ -6,7 +6,6 @@
 - Agenda: as reuniões de quem participa, ou de todo o serviço (RF-44).
 """
 from django.urls import reverse
-from django.utils.text import Truncator
 
 from core.registro import (
     EventoDaAgenda,
@@ -25,8 +24,19 @@ TAMANHO_DO_RESUMO = 70
 registrar_menu(ItemDeMenu("Reuniões", "reunioes:lista", "reuniao", ordem=50, grupo=GRUPO, ativo_em=("reunioes:",)))
 
 
-def _resumo(texto):
-    return Truncator(" ".join((texto or "").split())).chars(TAMANHO_DO_RESUMO)
+def _resumo(texto, tamanho=TAMANHO_DO_RESUMO):
+    """O texto numa linha só, cortado no fim de uma palavra, com reticências se ficou mais longo."""
+    texto = " ".join((texto or "").split())
+    if len(texto) <= tamanho:
+        return texto
+    corte = texto[:tamanho].rsplit(" ", 1)[0] if " " in texto[:tamanho] else texto[:tamanho - 1]
+    return corte.rstrip(",.;:-") + "…"
+
+
+def _origem(reuniao):
+    """"Reunião <título> de dd/mm", sem repetir a palavra quando o título já começa com ela."""
+    titulo = reuniao.titulo if reuniao.titulo.lower().startswith("reunião") else f"Reunião {reuniao.titulo}"
+    return f"{titulo} de {reuniao.data:%d/%m}"
 
 
 # ---------------------------------------------------------------- perfil do aluno
@@ -85,7 +95,7 @@ def pendencias_de_encaminhamento(request, usuario, todas):
             tipo="Encaminhamento de reunião",
             prazo=citacao.prazo,
             aluno=nome,
-            origem=f"Reunião {reuniao.titulo} de {reuniao.data:%d/%m}",
+            origem=_origem(reuniao),
             responsavel=citacao.responsavel.nome_curto if todas else "",
             chave=f"citacao-{citacao.pk}",
         ))

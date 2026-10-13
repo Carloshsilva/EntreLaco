@@ -141,7 +141,7 @@ class FormularioDaReuniaoMixin:
         secoes = [
             {"titulo": "Quando e onde", "campos": ["tipo", "titulo", "data", "hora_inicio", "duracao_minutos", "local"]},
             {"titulo": "Quem participa", "campos": ["participantes"]},
-            {"titulo": "Pauta", "campos": ["pauta"]},
+            {"titulo": "O que vai ser conversado", "campos": ["pauta"]},
         ]
         if self.object is not None:
             secoes.append({

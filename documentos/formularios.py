@@ -31,11 +31,12 @@ class FormularioDocumentoBase(ModeloFormularioBase):
             campo.required = False
             campo.widget.attrs.pop("required", None)
             campo.help_text = "Se ficar em branco, o título é o tipo do documento, por exemplo “Ficha de papel assinada”."
-            tipo = self.initial.get("tipo") or self.instance.tipo or Documento.Tipo.FICHA_PAPEL
+            tipo = (self.data.get(self.add_prefix("tipo")) if self.is_bound else None) or self.initial.get("tipo") \
+                or self.instance.tipo or Documento.Tipo.FICHA_PAPEL
             campo.widget.attrs.update({
                 "placeholder": titulo_sugerido(tipo),
                 "data-sugestao-de": "tipo",
-                "data-sugestoes": json.dumps({tipo.value: tipo.label for tipo in Documento.Tipo}, ensure_ascii=False),
+                "data-sugestoes": json.dumps({opcao.value: opcao.label for opcao in Documento.Tipo}, ensure_ascii=False),
             })
         if "arquivo" in self.fields:
             campo = self.fields["arquivo"]

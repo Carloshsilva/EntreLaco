@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Aulas{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <h1 class="el-display">Aulas</h1>
+    <p class="el-muted">Aulas marcadas e registradas, com a conta de aulas pela regra do serviço.</p>
+  </div>
+  {% if acesso|pode_editar:"aulas" %}
+  <div class="el-pagehead-actions">
+    <a class="el-btn el-btn-primary" href="{% url 'aulas:registrar' %}">{% icone "aula" %}Registrar aula</a>
+    <a class="el-btn el-btn-secondary" href="{% url 'aulas:marcar' %}">{% icone "calendario" %}Marcar aula</a>
+  </div>
+  {% endif %}
+</header>
+
+<form class="el-filters" method="get" action="{% url 'aulas:lista' %}" role="search" aria-label="Filtrar aulas"
+      hx-get="{% url 'aulas:lista' %}" hx-target="#resultados" hx-trigger="change, submit" hx-push-url="true">
+  <div class="el-field el-aulas-filtro-data">
+    <label class="el-label" for="filtro-de">De</label>
+    <input class="el-control" type="date" id="filtro-de" name="de" value="{{ de|date:'Y-m-d' }}">
+  </div>
+  <div class="el-field el-aulas-filtro-data">
+    <label class="el-label" for="filtro-ate">Até</label>
+    <input class="el-control" type="date" id="filtro-ate" name="ate" value="{{ ate|date:'Y-m-d' }}">
+  </div>
+  <div class="el-field">
+    <label class="el-label" for="filtro-professor">Professor(a)</label>
+    <select class="el-control" id="filtro-professor" name="professor">
+      <option value="todos"{% if escolha_professor == "todos" %} selected{% endif %}>Toda a equipe</option>
+      {% for p in pessoas %}<option value="{{ p.pk }}"{% if escolha_professor == p.pk|stringformat:"s" %} selected{% endif %}>{{ p.nome }}{% if p.pk == user.pk %} (você){% endif %}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="el-field">
+    <label class="el-label" for="filtro-aluno">Aluno</label>
+    <select class="el-control" id="filtro-aluno" name="aluno">
+      <option value="">Todos os alunos</option>
+      {% for a in alunos %}<option value="{{ a.pk }}"{% if aluno and aluno.pk == a.pk %} selected{% endif %}>{{ a.nome }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="el-field">
+    <label class="el-label" for="filtro-situacao">Situação</label>
+    <select class="el-control" id="filtro-situacao" name="situacao">
+      {% for valor, rotulo in situacoes %}<option value="{{ valor }}"{% if situacao == valor %} selected{% endif %}>{{ rotulo }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="el-cluster">
+    <button type="submit" class="el-btn el-btn-secondary">{% icone "buscar" %}Filtrar</button>
+    <a class="el-btn el-btn-quiet" href="{% url 'aulas:lista' %}">Limpar filtros</a>
+  </div>
+</form>
+
+<div id="resultados" aria-live="polite">
+  {% include "aulas/_lista_resultados.html" %}
+</div>
+{% endblock %}

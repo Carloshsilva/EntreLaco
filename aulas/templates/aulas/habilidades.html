@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Lista da BNCC{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    {% if url_configuracao %}<p class="el-breadcrumb"><a href="{{ url_configuracao }}">{% icone "seta-voltar" %}Configuração</a></p>{% endif %}
+    <h1 class="el-display">Lista da BNCC</h1>
+    <p class="el-muted">Eixos e habilidades que o serviço usa no registro de aula.</p>
+  </div>
+  <div class="el-pagehead-actions">
+    <a class="el-btn el-btn-primary" href="{% url 'aulas:habilidade_nova' %}">{% icone "mais" %}Cadastrar habilidade</a>
+  </div>
+</header>
+
+{% if bncc_ativa %}
+<div class="el-alert el-alert-success">
+  {% icone "ok" %}
+  <div><p><strong>Ligada no serviço.</strong> {% if total_ativas == 1 %}A habilidade ativa aparece{% else %}As {{ total_ativas }} habilidades ativas aparecem{% endif %} no registro de aula para a pessoa escolher.{% if url_configuracao %} Para desligar, use a <a href="{{ url_configuracao }}">configuração do serviço</a>.{% endif %}</p></div>
+</div>
+{% else %}
+<div class="el-alert el-alert-info">
+  {% icone "info" %}
+  <div><p><strong>Desligada no serviço.</strong> O registro de aula não mostra o campo de habilidades. Dá para montar a lista agora e ligar depois{% if url_configuracao %}, na <a href="{{ url_configuracao }}">configuração do serviço</a>{% endif %}.</p></div>
+</div>
+{% endif %}
+
+{% if habilidades %}
+<div class="el-table-wrap">
+  <table class="el-table el-table-stack">
+    <caption class="el-sr-only">Habilidades da BNCC do serviço, por código</caption>
+    <thead>
+      <tr>
+        <th scope="col">Código</th>
+        <th scope="col">Eixo</th>
+        <th scope="col">Descrição</th>
+        <th scope="col">Situação</th>
+        <th scope="col">Aulas que usaram</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for h in habilidades %}
+      <tr>
+        <th scope="row"><a href="{% url 'aulas:habilidade_editar' h.pk %}"><span class="el-sr-only">Editar </span><span class="el-data">{{ h.codigo }}</span></a></th>
+        <td data-label="Eixo">{{ h.eixo|default:"Sem eixo" }}</td>
+        <td data-label="Descrição">{{ h.descricao|truncatechars:160 }}</td>
+        <td data-label="Situação">{% if h.ativa %}<span class="el-badge el-badge-success">{% icone "ok" %}Ativa</span>{% else %}<span class="el-badge">{% icone "pausa" %}Inativa</span>{% endif %}</td>
+        <td data-label="Aulas que usaram">{{ h.total_aulas }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "core/_paginacao.html" %}
+{% else %}
+<div class="el-empty">
+  {% icone "documento" "el-icon-lg" %}
+  <p>A lista ainda está vazia. Cadastre a primeira habilidade, por exemplo EF01LP01.</p>
+</div>
+{% endif %}
+{% endblock %}

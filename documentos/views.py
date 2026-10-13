@@ -6,13 +6,16 @@
   serviço e permissão e registra cada abertura na trilha (`Acao.BAIXOU_ARQUIVO`).
 - Não há exclusão nesta versão: a regra de guarda espera o advogado (LGPD-08).
 """
+import datetime
 import mimetypes
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.text import slugify
 from django.views.decorators.http import require_safe
@@ -22,6 +25,7 @@ from alunos.models import Aluno
 from core import auditoria
 from core.arquivos import resumo_sha256, servir_arquivo
 from core.formularios import DATA
+from core.models import EventoAuditoria
 from core.permissoes import EDITAR
 from core.views import eventos_do_objeto
 from core.views_base import AcessoMixin, CriarComAuditoriaMixin, DoServicoMixin, EditarComAuditoriaMixin
@@ -130,13 +134,23 @@ class DetalheDoDocumento(AcessoMixin, DoServicoMixin, DetailView):
         return contexto
 
 
+def _ja_viu_a_previa(request, documento):
+    """A mesma pessoa já viu a prévia deste documento há pouco (dentro do tempo de uma sessão)?"""
+    desde = timezone.now() - datetime.timedelta(seconds=settings.SESSION_COOKIE_AGE)
+    return EventoAuditoria.objects.filter(
+        servico=request.servico, usuario=request.user, acao=auditoria.Acao.BAIXOU_ARQUIVO,
+        modelo=Documento._meta.label, objeto_id=str(documento.pk), criado_em__gte=desde,
+    ).exists()
+
+
 @login_required
 @require_safe
 def arquivo(request, pk):
     """Entrega o arquivo e registra a abertura na trilha (SEG-04).
 
-    `?previa=1` é a imagem mostrada na própria tela do documento; fica na trilha também,
-    porque quem abriu a tela viu o conteúdo.
+    Abrir ou baixar fica sempre na trilha. `?previa=1` é a foto mostrada na própria tela
+    do documento: também fica na trilha, porque quem abriu a tela viu o conteúdo, mas uma
+    vez por pessoa a cada sessão, para o histórico não se encher a cada visita.
     """
     if request.servico is None:
         return render(request, "core/sem_vinculo.html", status=403)
@@ -145,7 +159,7 @@ def arquivo(request, pk):
     documento = get_object_or_404(Documento, pk=pk, servico=request.servico)
     previa = request.GET.get("previa") == "1"
     resposta = servir_arquivo(documento.arquivo, nome_para_baixar(documento))
-    if request.method == "GET":
+    if request.method == "GET" and not (previa and _ja_viu_a_previa(request, documento)):
         auditoria.registrar(
             request, auditoria.Acao.BAIXOU_ARQUIVO, documento,
             descricao="Viu a prévia na tela do documento" if previa else "Abriu o arquivo",

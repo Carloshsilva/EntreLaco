@@ -110,7 +110,23 @@ def acesso_de(request, usuario):
     return Acesso.do_papel(vinculo.papel) if vinculo else ACESSO_VAZIO
 
 
-# ---------------------------------------------------------------- ficha incompleta (RF-19)
+# ---------------------------------------------------------------- textos
+
+def frase(texto):
+    """Fecha a frase com ponto, sem repetir o ponto de um nome abreviado ("Ana P.")."""
+    texto = texto.rstrip()
+    return texto if texto.endswith((".", "!", "?")) else texto + "."
+
+
+def faltas_da_ficha_visiveis(aluno, acesso):
+    """O que falta na ficha, só nos tipos de dado que a pessoa vê (RF-07).
+
+    O módulo de alunos sabe o tipo de dado de cada item (`faltas_visiveis`); sem ele, vale a lista simples.
+    """
+    if hasattr(aluno, "faltas_visiveis"):
+        return aluno.faltas_visiveis(acesso)
+    return aluno.faltas_da_ficha()
+
 
 def juntar(itens):
     """ "a, b e c"."""
@@ -118,11 +134,6 @@ def juntar(itens):
     if len(itens) <= 1:
         return "".join(itens)
     return ", ".join(itens[:-1]) + " e " + itens[-1]
-
-
-def recebe_pendencia_da_ficha(request, professor):
-    """A pendência de completar a ficha vai para o professor da aula que pode editar a identificação."""
-    return acesso_de(request, professor).pode_editar("identificacao")
 
 
 # ---------------------------------------------------------------- datas e endereços

@@ -1,0 +1,17 @@
+{% load entrelaco %}{# Seção "Ficha" do perfil. Recebe `dados` (alunos.secoes.contexto_da_ficha), `aluno`, `acesso`. #}
+{% if dados.pode_editar %}
+<p><a class="el-btn el-btn-secondary" href="{{ dados.url_editar }}">{% icone "editar" %}Editar ficha</a></p>
+{% endif %}
+{% for grupo in dados.grupos %}
+<div class="el-alunos-grupo">
+  <h3 class="el-label-text">{{ grupo.titulo }}</h3>
+  <dl class="el-dl el-dl-cols">
+    {% for item in grupo.itens %}
+    <div{% if item.longo %} class="el-alunos-dl-inteira"{% endif %}>
+      <dt>{{ item.rotulo }}</dt>
+      <dd{% if item.longo %} class="el-prose"{% endif %}>{{ item.valor|default:"Não informado" }}</dd>
+    </div>
+    {% endfor %}
+  </dl>
+</div>
+{% endfor %}

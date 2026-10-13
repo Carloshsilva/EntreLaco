@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Registrar revogação{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'autorizacoes:detalhe' autorizacao.pk %}">{% icone "seta-voltar" %}Comprovante</a></p>
+    <h1 class="el-display">Registrar revogação</h1>
+    <p class="el-muted">{{ aluno.nome_curto }} · {{ autorizacao.get_tipo_display }}</p>
+  </div>
+</header>
+
+<section class="el-card" aria-labelledby="titulo-revogada">
+  <div class="el-card-head">
+    <h2 id="titulo-revogada" class="el-heading">Autorização que a família quer revogar</h2>
+    {% include "autorizacoes/_selo.html" with autorizacao=autorizacao %}
+  </div>
+  <dl class="el-dl el-dl-cols">
+    <div><dt>Tipo</dt><dd>{{ autorizacao.get_tipo_display }}</dd></div>
+    <div><dt>Forma</dt><dd>{{ autorizacao.get_forma_display|default:"Não informada" }}</dd></div>
+    <div><dt>Quem autorizou</dt><dd>{{ autorizacao.responsavel_nome|default:"Não informado" }}</dd></div>
+    <div><dt>Colhida em</dt><dd>{% if autorizacao.colhida_em %}<time datetime="{{ autorizacao.colhida_em|date:'c' }}">{{ autorizacao.colhida_em|date:"d/m/Y \à\s H:i" }}</time>{% else %}Não informado{% endif %}{% if autorizacao.colhida_por %}, por {{ autorizacao.colhida_por.nome_curto }}{% endif %}</dd></div>
+  </dl>
+</section>
+
+<div class="el-alert el-alert-warning">
+  {% icone "alerta" %}
+  <div>
+    {% if autorizacao.tipo == "contato_escola" %}
+    <p>A revogação vale na hora: a partir do registro, nada mais é enviado à escola sobre este aluno, e ele sai do painel da escola.</p>
+    {% else %}
+    <p>A revogação vale na hora. Para voltar a valer, a família precisa autorizar de novo.</p>
+    {% endif %}
+    <p>A coleta continua guardada como prova, com a data e o motivo da revogação.</p>
+  </div>
+</div>
+
+<form class="el-form" method="post" novalidate>
+  {% csrf_token %}
+  {% include "core/_erros_do_formulario.html" %}
+  {% include "core/_campo.html" with campo=form.revogacao_motivo %}
+  {% include "core/_campo.html" with campo=form.confirmar %}
+  <div class="el-actions el-actions-sticky">
+    <button type="submit" class="el-btn el-btn-danger">{% icone "fechar" %}Registrar revogação</button>
+    <a class="el-btn el-btn-secondary" href="{% url 'autorizacoes:detalhe' autorizacao.pk %}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

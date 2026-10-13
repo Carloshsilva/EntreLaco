@@ -23,7 +23,7 @@
         <td data-label="Situação">{% include "reunioes/_situacao.html" %}</td>
         <td data-label="Alunos citados">{{ reuniao.alunos_citados }}</td>
         {% if aluno_citar %}
-        <td data-label="Citar {{ aluno_citar.nome_curto }}"><a class="el-btn el-btn-secondary" href="{% url 'reunioes:citacao_nova' reuniao.pk %}?aluno={{ aluno_citar.pk }}">{% icone "mais" %}Citar aqui<span class="el-sr-only"> {{ aluno_citar.nome_curto }} na {{ reuniao.titulo }} de {{ reuniao.data|date:"d/m" }}</span></a></td>
+        <td data-label="Citar {{ aluno_citar.nome_curto }}"><a class="el-btn el-btn-secondary" href="{% url 'reunioes:citacao_nova' reuniao.pk %}?aluno={{ aluno_citar.pk }}">{% icone "mais" %}Citar aqui<span class="el-sr-only">: {{ aluno_citar.nome_curto }} em {{ reuniao.titulo }}, {{ reuniao.data|date:"d/m" }}</span></a></td>
         {% endif %}
       </tr>
       {% endfor %}
