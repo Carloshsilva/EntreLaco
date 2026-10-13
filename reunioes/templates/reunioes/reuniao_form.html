@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{% if object %}Editar reunião{% else %}Marcar reunião{% endif %}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    {% if object %}
+    <p class="el-breadcrumb"><a href="{% url 'reunioes:detalhe' object.pk %}">{% icone "seta-voltar" %}{{ object.titulo }}</a></p>
+    <h1 class="el-display">Editar reunião</h1>
+    <p class="el-muted">{{ object.get_tipo_display }}, {{ object.data|date:"d/m/Y" }}. Toda alteração fica no histórico, com o motivo.</p>
+    {% else %}
+    <p class="el-breadcrumb"><a href="{% url 'reunioes:lista' %}">{% icone "seta-voltar" %}Reuniões</a></p>
+    <h1 class="el-display">Marcar reunião</h1>
+    <p class="el-muted">A reunião aparece na agenda de quem participa. A ata você escreve depois, na tela da reunião.</p>
+    {% endif %}
+  </div>
+</header>
+{% if object %}{% url 'reunioes:detalhe' object.pk as url_de_volta %}{% else %}{% url 'reunioes:lista' as url_de_volta %}{% endif %}
+{% if object %}
+{% include "core/_formulario.html" with botao="Salvar reunião" cancelar=url_de_volta secoes=secoes colunas=True %}
+{% else %}
+{% include "core/_formulario.html" with botao="Marcar reunião" cancelar=url_de_volta secoes=secoes colunas=True %}
+{% endif %}
+{% endblock %}

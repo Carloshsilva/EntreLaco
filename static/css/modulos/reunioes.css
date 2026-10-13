@@ -1,1 +1,23 @@
 /* Estilos próprios do módulo reunioes. Use os tokens de tokens.css e o prefixo el-. */
+
+/* Citações de alunos: na tela da reunião e na seção do perfil do aluno. */
+.el-reunioes-citacoes { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-4); }
+.el-reunioes-citacao { display: grid; gap: var(--space-3); min-width: 0; border-top: 1px solid var(--line); padding-top: var(--space-4); }
+.el-reunioes-citacao:first-child { border-top: 0; padding-top: 0; }
+/* Ao chegar por um link #citacao-<n> (pendência, perfil), a citação fica marcada. */
+.el-reunioes-citacao:target { box-shadow: inset 4px 0 0 var(--laco); padding-left: var(--space-3); }
+.el-reunioes-citacao-topo { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); align-items: center; justify-content: space-between; }
+.el-reunioes-selos { margin: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* O que foi dito e o encaminhamento na linha inteira; responsável e prazo lado a lado a partir de 480px. */
+@media (min-width: 480px) {
+  .el-reunioes-dl { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.el-reunioes-dl > .el-reunioes-inteiro { grid-column: 1 / -1; }
+
+/* Participantes: nomes em linha, quebrando no celular. */
+.el-reunioes-pessoas { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.el-reunioes-pessoas > li {
+  background: var(--surface-sunken); border: 1px solid var(--line); border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-3); font-size: 15px; line-height: 22px; overflow-wrap: anywhere;
+}

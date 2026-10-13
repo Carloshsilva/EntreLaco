@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}{% if object %}Editar citação{% else %}Citar aluno{% endif %} · {{ reuniao.titulo }}{% endblock %}
+{% block largura %}el-page-narrow{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <p class="el-breadcrumb"><a href="{% url 'reunioes:detalhe' reuniao.pk %}">{% icone "seta-voltar" %}{{ reuniao.titulo }}</a></p>
+    <h1 class="el-display">{% if object %}Editar citação{% else %}Citar aluno{% endif %}</h1>
+    <p class="el-muted">{{ reuniao.titulo }}, {{ reuniao.data|date:"d/m/Y" }}. A citação aparece no perfil do aluno, só para quem vê o tipo de dado escolhido.</p>
+  </div>
+</header>
+{% url 'reunioes:detalhe' reuniao.pk as url_de_volta %}
+{% include "core/_formulario.html" with botao="Salvar citação" cancelar=url_de_volta secoes=secoes %}
+{% endblock %}

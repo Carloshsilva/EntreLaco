@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Reuniões{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <h1 class="el-display">Reuniões</h1>
+    <p class="el-muted">Calendário de reuniões da equipe, com pauta, ata e os alunos citados.</p>
+  </div>
+  {% if acesso|pode_editar:"atas" %}
+  <div class="el-pagehead-actions">
+    <a class="el-btn el-btn-primary" href="{% url 'reunioes:nova' %}">{% icone "mais" %}Marcar reunião</a>
+  </div>
+  {% endif %}
+</header>
+
+{% if aluno_citar %}
+<div class="el-alert el-alert-info">
+  {% icone "info" %}
+  <div>
+    <p>Escolha a reunião em que você vai citar {{ aluno_citar.nome_curto }} e use “Citar aqui”. Se a reunião ainda não está no calendário, marque a reunião antes.</p>
+    <p><a href="{% url 'reunioes:lista' %}">Ver a lista sem citar ninguém</a></p>
+  </div>
+</div>
+{% endif %}
+
+<section class="el-section" aria-labelledby="titulo-proximas">
+  <h2 id="titulo-proximas" class="el-title">Próximas</h2>
+  {% if proximas %}
+  {% include "reunioes/_tabela.html" with reunioes=proximas legenda="Próximas reuniões, a partir de hoje" %}
+  {% if proximas|length == limite_de_proximas %}<p class="el-caption">Mostrando as {{ limite_de_proximas }} próximas reuniões.</p>{% endif %}
+  {% else %}
+  <div class="el-empty">
+    {% icone "reuniao" "el-icon-lg" %}
+    <p>Nenhuma reunião marcada de hoje em diante.</p>
+  </div>
+  {% endif %}
+</section>
+
+<section class="el-section" aria-labelledby="titulo-passadas">
+  <h2 id="titulo-passadas" class="el-title">Passadas</h2>
+  {% if pagina.object_list %}
+  {% include "reunioes/_tabela.html" with reunioes=pagina.object_list legenda="Reuniões passadas, da mais recente para a mais antiga" %}
+  {% include "core/_paginacao.html" %}
+  {% else %}
+  <div class="el-empty"><p>Nenhuma reunião antes de hoje.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

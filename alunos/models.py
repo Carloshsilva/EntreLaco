@@ -163,20 +163,43 @@ class Aluno(ModeloDoServico):
         nascimento = self.data_nascimento
         return hoje.year - nascimento.year - ((hoje.month, hoje.day) < (nascimento.month, nascimento.day))
 
-    def faltas_da_ficha(self):
-        """O que falta para a ficha estar completa (RF-19). Lista de rótulos."""
+    def faltas_da_ficha_por_grupo(self):
+        """O que falta para a ficha estar completa (RF-19), com o tipo de dado de cada item.
+
+        Lista de (tipo de dado, rótulo). O tipo serve para não mostrar a quem não vê
+        aquele tipo de dado o que falta nele (RF-07).
+        """
         faltas = []
         if not self.data_nascimento:
-            faltas.append("data de nascimento")
+            faltas.append(("identificacao", "data de nascimento"))
         if not self.unidade:
-            faltas.append("unidade de atendimento")
+            faltas.append(("identificacao", "unidade de atendimento"))
         if not self.ano_escolar:
-            faltas.append("ano escolar")
+            faltas.append(("escolar", "ano escolar"))
         if not self.escola_id and not self.sem_matricula:
-            faltas.append("escola de origem")
-        if self.pk and not self.responsaveis.exists():
-            faltas.append("um responsável")
+            faltas.append(("escolar", "escola de origem"))
+        if self.pk and not self._tem_responsavel():
+            faltas.append(("familia", "um responsável"))
         return faltas
+
+    def faltas_da_ficha(self):
+        """O que falta para a ficha estar completa (RF-19). Lista de rótulos."""
+        return [rotulo for _, rotulo in self.faltas_da_ficha_por_grupo()]
+
+    def faltas_visiveis(self, acesso):
+        """Só o que falta nos tipos de dado que a pessoa vê."""
+        return [rotulo for grupo, rotulo in self.faltas_da_ficha_por_grupo() if acesso.pode_ver(grupo)]
+
+    def _tem_responsavel(self):
+        # Em listas, a consulta anota `tem_responsavel` (ou traz os responsáveis junto) para não
+        # fazer uma consulta por aluno.
+        anotado = getattr(self, "tem_responsavel", None)
+        if anotado is not None:
+            return bool(anotado)
+        guardados = getattr(self, "_prefetched_objects_cache", {})
+        if "responsaveis" in guardados:
+            return bool(guardados["responsaveis"])
+        return self.responsaveis.exists()
 
     @property
     def ficha_completa(self):
@@ -262,3 +285,13 @@ class MudancaDeSituacao(ModeloDoServico):
 
     def __str__(self):
         return f"{self.aluno}: {self.get_de_display()} → {self.get_para_display()}"
+
+    @property
+    def e_alta(self):
+        """Saída por alta: o motivo de saída começa com "Alta" (a lista é configurável, RF-22)."""
+        return self.para == Aluno.Situacao.ENCERRADO and (self.motivo_saida or "").strip().lower().startswith("alta")
+
+    @property
+    def pede_professor_domiciliar(self):
+        """Alta de aluno do TMO ainda sem a verificação do professor domiciliar (RF-24)."""
+        return self.e_alta and self.aluno.tmo and self.domiciliar_verificado_em is None

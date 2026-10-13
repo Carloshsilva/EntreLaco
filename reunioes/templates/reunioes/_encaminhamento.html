@@ -1,0 +1,2 @@
+{# Situação do encaminhamento de uma citação, sempre com palavra. Recebe `c` (CitacaoDeAluno com `vencida`). #}
+{% if c.concluida %}<span class="el-badge el-badge-success">Concluído</span>{% elif not c.encaminhamento and not c.responsavel_id %}<span class="el-badge">Sem encaminhamento</span>{% elif c.vencida %}<span class="el-badge el-badge-danger">Prazo vencido</span>{% else %}<span class="el-badge el-badge-fita">Pendente</span>{% endif %}

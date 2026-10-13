@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load entrelaco %}
+{% block titulo %}Alunos{% endblock %}
+{% block conteudo %}
+<header class="el-pagehead">
+  <div class="el-pagehead-text">
+    <h1 class="el-display">Alunos</h1>
+    <p class="el-muted">Alunos de {{ servico_atual.nome }}. Abra o nome para ver o perfil.</p>
+  </div>
+  <div class="el-pagehead-actions">
+    {% if acesso|pode_ver:"aulas" %}<a class="el-btn el-btn-secondary" href="{% url 'alunos:fila' %}">{% icone "fila" %}Ver a ordem de atendimento</a>{% endif %}
+    {% if acesso|pode_editar:"identificacao" %}<a class="el-btn el-btn-primary" href="{% url 'alunos:novo' %}">{% icone "nova-pessoa" %}Cadastrar aluno</a>{% endif %}
+  </div>
+</header>
+
+<form class="el-filters" method="get" action="{% url 'alunos:lista' %}" role="search" aria-label="Alunos">
+  <div class="el-field el-search">
+    <label class="el-label" for="busca-aluno">Buscar pelo nome</label>
+    {% icone "buscar" %}
+    <input class="el-control" type="search" id="busca-aluno" name="q" value="{{ q }}" maxlength="100" autocomplete="off" spellcheck="false"
+           hx-get="{% url 'alunos:lista' %}" hx-trigger="input changed delay:300ms, search" hx-target="#resultados" hx-push-url="true" hx-include="closest form">
+  </div>
+  <div class="el-field">
+    <label class="el-label" for="filtro-situacao">Situação</label>
+    <select class="el-control" id="filtro-situacao" name="situacao"
+            hx-get="{% url 'alunos:lista' %}" hx-trigger="change" hx-target="#resultados" hx-push-url="true" hx-include="closest form">
+      {% for codigo, rotulo in filtros %}<option value="{{ codigo }}"{% if codigo == filtro %} selected{% endif %}>{{ rotulo }}</option>{% endfor %}
+    </select>
+  </div>
+  {% if unidades %}
+  <div class="el-field">
+    <label class="el-label" for="filtro-unidade">Unidade</label>
+    <select class="el-control" id="filtro-unidade" name="unidade"
+            hx-get="{% url 'alunos:lista' %}" hx-trigger="change" hx-target="#resultados" hx-push-url="true" hx-include="closest form">
+      <option value="">Todas as unidades</option>
+      {% for u in unidades %}<option value="{{ u }}"{% if u == unidade %} selected{% endif %}>{{ u }}</option>{% endfor %}
+    </select>
+  </div>
+  {% endif %}
+  <button type="submit" class="el-btn el-btn-secondary">{% icone "buscar" %}Buscar</button>
+</form>
+
+<div id="resultados" aria-live="polite">
+  {% include "alunos/_resultados.html" %}
+</div>
+{% endblock %}

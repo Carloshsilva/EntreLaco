@@ -1,0 +1,15 @@
+{% load entrelaco %}{# Seção "Citações em reuniões" do perfil do aluno. Recebe `dados` (reunioes.encaixes.secao_citacoes_do_aluno), `aluno`, `acesso`. #}
+{% if dados.citacoes %}
+<ul class="el-reunioes-citacoes">
+  {% for c in dados.citacoes %}
+  <li class="el-reunioes-citacao" id="citacao-{{ c.pk }}">{% include "reunioes/_citacao.html" with por="reuniao" proximo=dados.proximo %}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="el-muted">Nenhuma citação em reunião até agora.{% if dados.pode_citar %} Quando a equipe falar sobre o aluno numa reunião, registre a citação para ela aparecer aqui.{% endif %}</p>
+{% endif %}
+{% if dados.pode_citar %}
+<div class="el-actions">
+  <a class="el-btn el-btn-secondary" href="{{ dados.url_citar }}">{% icone "reuniao" %}Citar em uma reunião</a>
+</div>
+{% endif %}
