@@ -232,6 +232,7 @@ def duas_etapas(request):
         "ativa": False,
         "form": form,
         "qr": _qr_em_data_uri(uri),
+        "uri": uri,
         "segredo": " ".join(segredo[i:i + 4] for i in range(0, len(segredo), 4)),
         "obrigatoria": precisa_duas_etapas(usuario),
     })

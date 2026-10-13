@@ -1,10 +1,14 @@
 {% extends "base_simples.html" %}
+{% load entrelaco %}
 {% block titulo %}Esqueci a senha{% endblock %}
 {% block conteudo %}
 <p class="el-auth-brand">EntreLaço</p>
 <div class="el-card el-auth-card">
   <h1 class="el-title">Esqueci a senha</h1>
   <p>Digite o e-mail que você usa para entrar. Se ele estiver cadastrado, você recebe um link para criar uma senha nova.</p>
+  {% email_ligado as ligado %}{% if not ligado %}
+  <p class="el-alert el-alert-warning">{% icone "alerta" %}<span>O envio de e-mail ainda não está ligado, então o link não vai chegar. Peça a quem cuida da equipe do seu serviço para falar com o administrador da plataforma.</span></p>
+  {% endif %}
   <form class="el-form" method="post" novalidate>
     {% csrf_token %}
     {% include "core/_erros_do_formulario.html" %}

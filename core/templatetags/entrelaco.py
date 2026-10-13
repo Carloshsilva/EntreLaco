@@ -3,6 +3,7 @@ from django import template
 from django.templatetags.static import static
 from django.utils.html import format_html
 
+from core.correio import email_ligado as _email_ligado
 from core.permissoes import EDITAR, VER
 
 register = template.Library()
@@ -16,6 +17,12 @@ def icone(nome, classe=""):
         '<svg class="{}" aria-hidden="true" focusable="false"><use href="{}#{}"></use></svg>',
         classes, static("img/icones.svg"), nome,
     )
+
+
+@register.simple_tag
+def email_ligado():
+    """{% email_ligado as ligado %}: o e-mail sai de verdade, em vez de ficar só nos registros."""
+    return _email_ligado()
 
 
 @register.filter

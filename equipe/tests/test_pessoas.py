@@ -1,4 +1,6 @@
 """Pessoas da equipe: lista, cadastro, link de senha, edição, papel, desativar e reativar."""
+import io
+from contextlib import redirect_stdout
 from unittest import mock
 from urllib.parse import urlparse
 
@@ -6,7 +8,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.sessions.models import Session
 from django.core import mail
 from django.db import connection
-from django.test import Client
+from django.test import Client, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
@@ -518,6 +520,23 @@ class LinkDeSenhaTestes(EquipeTestCase):
         self.assertIn("/senha/definir/", mail.outbox[0].body)
         self.assertTrue(self.eventos(acao=Acao.OUTRO, modelo="core.Usuario", objeto_id=str(self.apoio.pk),
                                      descricao__startswith="Mandou por e-mail").exists())
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.console.EmailBackend")
+    def test_sem_email_ligado_a_tela_nao_diz_que_mandou(self):
+        pessoa = self.sem_senha()
+        self.entrar(self.coordenacao)
+        # No modo console, a mensagem só vai para os registros do servidor.
+        with redirect_stdout(io.StringIO()) as registros:
+            na_tela = self.client.post(reverse("equipe:pessoa_link_senha", args=[pessoa.pk]), follow=True)
+            so_email = self.client.post(reverse("equipe:pessoa_link_senha", args=[self.apoio.pk]), follow=True)
+        self.assertIn("/senha/definir/", registros.getvalue())
+        self.assertIsNotNone(na_tela.context["link"])
+        self.assertContains(na_tela, "O envio de e-mail ainda não está ligado: mande o link pelo WhatsApp")
+        self.assertNotContains(na_tela, "também foi mandado")
+        self.assertContains(so_email, "O envio de e-mail ainda não está ligado, então o link não foi mandado")
+        self.assertNotContains(so_email, "Link para criar a senha mandado para")
+        self.assertTrue(self.eventos(acao=Acao.OUTRO, objeto_id=str(self.apoio.pk),
+                                     descricao__endswith="o e-mail não foi enviado").exists())
 
     def test_email_que_falha(self):
         pessoa = self.sem_senha()

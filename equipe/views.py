@@ -31,6 +31,7 @@ from django.views import View
 from django.views.generic import CreateView, FormView, TemplateView, UpdateView
 
 from core import auditoria
+from core.correio import email_ligado
 from core.models import EventoAuditoria, Papel, Vinculo
 from core.permissoes import Acesso
 from core.views_base import AcessoMixin, CriarComAuditoriaMixin, EditarComAuditoriaMixin
@@ -45,6 +46,7 @@ logger = logging.getLogger(__name__)
 
 # O link de senha fica na sessão só até a tela da pessoa abrir uma vez.
 CHAVE_DO_LINK = "equipe_link_senha"
+SEM_EMAIL = "Peça ao administrador da plataforma para ligar o e-mail ou para definir a senha dessa pessoa pelo servidor."
 
 SITUACOES = [("ativas", "Com acesso"), ("desativadas", "Desativadas"), ("todas", "Todas")]
 PESSOAS_POR_PAGINA = 50
@@ -132,7 +134,8 @@ def mandar_link_por_email(request, usuario, link, novo):
     except Exception:  # noqa: BLE001 - qualquer falha do servidor de e-mail
         logger.warning("Não foi possível mandar por e-mail o link de senha da pessoa %s.", usuario.pk, exc_info=True)
         return False
-    return True
+    # Sem e-mail ligado, a mensagem foi só para os registros do servidor: não chegou a ninguém.
+    return email_ligado()
 
 
 def entregar_link(request, usuario, novo, na_tela):
@@ -339,6 +342,8 @@ class PessoaNovaView(AcessoMixin, FormView):
             )
             if enviado:
                 messages.success(self.request, f"{texto}: o link para criar a senha foi mandado para {usuario.email}.")
+            elif not email_ligado():
+                messages.warning(self.request, f"{texto}, e o envio de e-mail ainda não está ligado. {SEM_EMAIL}")
             else:
                 messages.warning(
                     self.request,
@@ -608,6 +613,8 @@ class PessoaLinkSenhaView(AcessoMixin, PessoaDoServicoMixin, View):
                 f"Link para criar a senha mandado para {usuario.email}. Ele vale por "
                 f"{horas} hora{'s' if horas != 1 else ''} e serve uma vez só.",
             )
+        elif not email_ligado():
+            messages.warning(request, f"O envio de e-mail ainda não está ligado, então o link não foi mandado. {SEM_EMAIL}")
         else:
             messages.warning(request, "Não deu para mandar o e-mail agora. Tente de novo daqui a pouco.")
         return redirect(self.url_da_pessoa())

@@ -2,7 +2,7 @@
 import datetime
 
 import pyotp
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -52,6 +52,13 @@ class DuasEtapasTestes(TestCase):
     def setUp(self):
         self.servico = criar_servico()
 
+    def test_esqueci_a_senha_avisa_quando_o_email_nao_esta_ligado(self):
+        aviso = "O envio de e-mail ainda não está ligado"
+        for caminho in ("senha_esqueci", "senha_pedido_enviado"):
+            self.assertNotContains(self.client.get(reverse(caminho)), aviso)
+            with override_settings(EMAIL_BACKEND="django.core.mail.backends.console.EmailBackend"):
+                self.assertContains(self.client.get(reverse(caminho)), aviso)
+
     def test_quem_configura_e_levado_a_ativar(self):
         supervisao = criar_supervisao(self.servico)
         supervisao.totp_ativo = False
@@ -65,8 +72,10 @@ class DuasEtapasTestes(TestCase):
         supervisao.totp_segredo = ""
         supervisao.save()
         self.client.force_login(supervisao)
-        self.client.get(reverse("duas_etapas"))
+        tela = self.client.get(reverse("duas_etapas"))
         segredo = self.client.session["duas_etapas_segredo_novo"]
+        # No celular que tem o aplicativo, o botão abre o cadastro direto, sem ler o QR.
+        self.assertContains(tela, f'href="otpauth://totp/EntreLa%C3%A7o:sup%40exemplo.org?secret={segredo}')
         resposta = self.client.post(reverse("duas_etapas"), {"codigo": pyotp.TOTP(segredo).now()})
         self.assertRedirects(resposta, reverse("inicio"))
         supervisao.refresh_from_db()
