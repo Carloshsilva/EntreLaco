@@ -151,7 +151,11 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
         if not (DEBUG or RODANDO_TESTES)
-        else "django.contrib.staticfiles.storage.StaticFilesStorage"
+        else "django.contrib.staticfiles.storage.StaticFilesStorage",
+        # Os arquivos estáticos são públicos: o collectstatic do build roda como root e o servidor
+        # roda com outro usuário, que precisa ler tudo. FILE_UPLOAD_PERMISSIONS (abaixo) vale só
+        # para os arquivos privados enviados.
+        "OPTIONS": {"file_permissions_mode": 0o644, "directory_permissions_mode": 0o755},
     },
 }
 
